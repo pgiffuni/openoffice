@@ -762,6 +762,7 @@ sal_Bool SbaTableQueryBrowser::InitializeGridModel(const Reference< ::com::sun::
 					case DataType::BINARY:
 					case DataType::VARBINARY:
 					case DataType::LONGVARBINARY:
+                    case DataType::BLOB:
 						aCurrentModelType = ::rtl::OUString::createFromAscii("TextField");
 						sDefaultProperty = PROPERTY_DEFAULTTEXT;
 						break;
@@ -2191,13 +2192,12 @@ void SbaTableQueryBrowser::populateTree(const Reference<XNameAccess>& _xNameAcce
 		{
 			if( !m_pTreeView->getListBox().GetEntryPosByName(*pIter,_pParent))
 			{
+                Reference<XNameAccess> xChild(_xNameAccess->getByName(*pIter),UNO_QUERY);
 				DBTreeListUserData* pEntryData = new DBTreeListUserData;
 				pEntryData->eType = _eEntryType;
-                if ( _eEntryType == etQuery )
+                if ( _eEntryType == etQuery && xChild.is() )
                 {
-					Reference<XNameAccess> xChild(_xNameAccess->getByName(*pIter),UNO_QUERY);
-					if ( xChild.is() )
-						pEntryData->eType = etQueryContainer;
+                    pEntryData->eType = etQueryContainer;
                 }
                 implAppendEntry( _pParent, *pIter, pEntryData, pEntryData->eType );
 			}

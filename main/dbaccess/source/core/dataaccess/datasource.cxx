@@ -753,12 +753,14 @@ Reference< XConnection > ODatabaseSource::buildLowLevelConnection(const ::rtl::O
 			if ( m_pImpl->isEmbeddedDatabase() )
 			{
 				sal_Int32 nCount = aDriverInfo.getLength();
-				aDriverInfo.realloc(nCount + 2 );
+				aDriverInfo.realloc(nCount + 3 );
 				aDriverInfo[nCount].Name = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("URL"));
 				aDriverInfo[nCount++].Value <<= m_pImpl->getURL();
 				aDriverInfo[nCount].Name = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Storage"));
                 Reference< css::document::XDocumentSubStorageSupplier> xDocSup( m_pImpl->getDocumentSubStorageSupplier() );
 				aDriverInfo[nCount++].Value <<= xDocSup->getDocumentSubStorage(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("database")),ElementModes::READWRITE);
+                aDriverInfo[nCount].Name = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("InteractionHandler"));
+				aDriverInfo[nCount++].Value <<= m_pImpl->m_aContext.createComponent( "com.sun.star.task.InteractionHandler" );
 			}
 			if (nAdditionalArgs)
 				xReturn = xManager->getConnectionWithInfo(m_pImpl->m_sConnectURL, ::comphelper::concatSequences(aUserPwd,aDriverInfo));
