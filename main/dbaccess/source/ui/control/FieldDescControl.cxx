@@ -405,22 +405,25 @@ void OFieldDescControl::CheckScrollBars()
 	if (bNeedVScrollBar)
 	{
 		m_pVertScroll->Show();
-		m_pVertScroll->SetRangeMax(nActive - nLastVisible);
+		m_pVertScroll->SetRangeMax(nActive);
+        m_pVertScroll->SetVisibleSize(nLastVisible);
 //		m_pVertScroll->SetThumbPos(0);
 
 		m_pVertScroll->SetPosSizePixel( Point(nNewHWidth, 0), Size(nVScrollWidth, szOverallSize.Height()) );
 	}
 	else
 	{
+        m_nOldVThumb = 0;
 		m_pVertScroll->Hide();
 		m_pVertScroll->SetRangeMax(0);
 		m_pVertScroll->SetThumbPos(0);
 	}
-
+    m_nOldHThumb = 0;
 	if (bNeedHScrollBar)
 	{
 		m_pHorzScroll->Show();
-		m_pHorzScroll->SetRangeMax((lMaxXPosition - lMaxXAvailable + HSCROLL_STEP - 1 )/HSCROLL_STEP);
+		m_pHorzScroll->SetRangeMax((lMaxXPosition - lMaxXAvailable + HSCROLL_STEP + 1 )/HSCROLL_STEP + 1);
+        m_pHorzScroll->SetVisibleSize(m_pHorzScroll->GetRangeMax() - 1);
 //		m_pHorzScroll->SetThumbPos(0);
 
 		m_pHorzScroll->SetPosSizePixel( Point(0, nNewVHeight), Size(bNeedVScrollBar ? nNewHWidth : szOverallSize.Width(), nHScrollHeight) );
@@ -1209,7 +1212,8 @@ void OFieldDescControl::SetPosSize( Control** ppControl, long nRow, sal_uInt16 n
 		if ( isRightAligned() )
 		{
 			Size aOwnSize = GetSizePixel();
-			aPosition.X() = aOwnSize.Width() - aSize.Width();
+            long nVScrollWidth = m_pVertScroll->GetSizePixel().Width();
+			aPosition.X() = aOwnSize.Width() - aSize.Width() - nVScrollWidth - LogicToPixel(Size(3, 0),MAP_APPFONT).Width();
 		}
 		else
 			aPosition.X() = CONTROL_WIDTH_1 + CONTROL_SPACING_X;
