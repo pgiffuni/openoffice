@@ -2552,6 +2552,8 @@ void ScInterpreter::ScIsValue()
     switch ( GetRawStackType() )
     {
         case svDouble:
+        case svBigFloat:
+            // A high precision number is a value, exactly like a double.
             Pop();
             nRes = 1;
         break;

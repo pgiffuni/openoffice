@@ -440,6 +440,15 @@ void ScFormulaCell::GetString( String& rString )
         rString.Erase();
 }
 
+formula::FormulaConstTokenRef ScFormulaCell::GetResultToken() const
+{
+    // The caller may get an out of date result, GetValue() and friends
+    // interpret the cell first. Interpret() only ever replaces the token
+    // through ScFormulaResult, which is ref counted, so an existing reference
+    // stays valid, but the value it refers to may be the previous one.
+    return aResult.GetCellResultToken();
+}
+
 const ScMatrix* ScFormulaCell::GetMatrix()
 {
     if ( pDocument->GetAutoCalc() )

@@ -787,6 +787,11 @@
 #define HID_FUNC_BITXOR                                         "SC_HID_FUNC_BITXOR"
 #define HID_FUNC_BITLSHIFT                                      "SC_HID_FUNC_BITLSHIFT"
 #define HID_FUNC_BITRSHIFT                                      "SC_HID_FUNC_BITRSHIFT"
+<<<<<<< HEAD
 #define HID_FUNC_IFNA                                           "SC_HID_FUNC_IFNA"
 #define HID_FUNC_IFERROR                                        "SC_HID_FUNC_IFERROR"
 #define HID_FUNC_SKEWP                                          "SC_HID_FUNC_SKEWP"
+||||||| parent of bb0bfd854b (sc: add a high precision number type to Calc, first milestone)
+=======
+#define HID_FUNC_BIGFLOAT                                      "SC_HID_FUNC_BIGFLOAT"
+>>>>>>> bb0bfd854b (sc: add a high precision number type to Calc, first milestone)

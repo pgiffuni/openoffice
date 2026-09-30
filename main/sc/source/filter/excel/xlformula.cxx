@@ -412,6 +412,21 @@ static const XclFunctionInfo saFuncTable_Odf[] =
     EXC_FUNCENTRY_ODF( ocArabic,        1,  1,  0,  "ARABIC" ),
     EXC_FUNCENTRY_ODF( ocB,             3,  4,  0,  "B" ),
     EXC_FUNCENTRY_ODF( ocBase,          2,  3,  0,  "BASE" ),
+<<<<<<< HEAD
+||||||| parent of bb0bfd854b (sc: add a high precision number type to Calc, first milestone)
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITAND" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITLSHIFT" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITOR" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITRSHIFT" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITXOR" ),
+=======
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITAND" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITLSHIFT" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITOR" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITRSHIFT" ),
+    EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITXOR" ),
+    EXC_FUNCENTRY_ODF( ocBigFloat,      1,  1,  0,  "ORG.OPENOFFICE.BIGFLOAT" ),
+>>>>>>> bb0bfd854b (sc: add a high precision number type to Calc, first milestone)
     EXC_FUNCENTRY_ODF( ocChiSqDist,     2,  3,  0,  "CHISQDIST" ),
     EXC_FUNCENTRY_ODF( ocChiSqInv,      2,  2,  0,  "CHISQINV" ),
     EXC_FUNCENTRY_ODF( ocKombin2,       2,  2,  0,  "COMBINA" ),

@@ -68,6 +68,10 @@ enum StackVarEnum
     svExternalName,
     svSubroutine,                       // A token with a subroutine token array.
     svError,                            // error token
+    svBigFloat,                         // high precision decimal number, see
+                                        // sc/inc/bigfloattoken.hxx. The value
+                                        // type itself lives in Calc, only the
+                                        // category is known here.
     svMissing = 0x70,                   // 0 or ""
     svSep,                              // separator, ocSep, ocOpen, ocClose
     svUnknown                           // unknown StackType

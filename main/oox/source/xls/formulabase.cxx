@@ -749,6 +749,21 @@ static const FunctionData saFuncTableOdf[] =
     { "ARABIC",                 0,                      NOID,   NOID,   1,  1,  V, { VR }, FUNCFLAG_MACROCALLODF },
     { "B",                      0,                      NOID,   NOID,   3,  4,  V, { VR }, FUNCFLAG_MACROCALLODF },
     { "BASE",                   0,                      NOID,   NOID,   2,  3,  V, { VR }, FUNCFLAG_MACROCALLODF },
+<<<<<<< HEAD
+||||||| parent of bb0bfd854b (sc: add a high precision number type to Calc, first milestone)
+    { "BITAND",                 0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITLSHIFT",              0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITOR",                  0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITRSHIFT",              0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITXOR",                 0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+=======
+    { "BITAND",                 0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITLSHIFT",              0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITOR",                  0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITRSHIFT",              0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "BITXOR",                 0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
+    { "ORG.OPENOFFICE.BIGFLOAT",0,                      NOID,   NOID,   1,  1,  V, { VR }, FUNCFLAG_MACROCALLODF },
+>>>>>>> bb0bfd854b (sc: add a high precision number type to Calc, first milestone)
     { "CHISQDIST",              0,                      NOID,   NOID,   2,  3,  V, { VR }, FUNCFLAG_MACROCALLODF },
     { "CHISQINV",               0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },
     { "COMBINA",                0,                      NOID,   NOID,   2,  2,  V, { VR }, FUNCFLAG_MACROCALLODF },

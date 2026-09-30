@@ -30,6 +30,7 @@
 #include "attrib.hxx"
 #include "cell.hxx"
 #include "compiler.hxx"
+#include "bigfloattoken.hxx"
 #include "interpre.hxx"
 #include "document.hxx"
 #include "scmatrix.hxx"
@@ -1080,7 +1081,8 @@ void ScFormulaCell::CalcAfterLoad()
 	// gespeichert werden, woraufhin spaeter im NumberFormatter die BLC Lib
 	// bei einem fabs(-NAN) abstuerzt (#32739#)
 	// hier fuer alle Systeme ausbuegeln, damit da auch Err503 steht
-	if ( aResult.IsValue() && !::rtl::math::isFinite( aResult.GetDouble() ) )
+	if ( aResult.IsValue() && aResult.GetCellResultType() != svBigFloat
+	  && !::rtl::math::isFinite( aResult.GetDouble() ) )
 	{
 		DBG_ERRORFILE("Formelzelle INFINITY !!! Woher kommt das Dokument?");
 		aResult.SetResultError( errIllegalFPOperation );
@@ -1480,6 +1482,17 @@ void ScFormulaCell::Interpret()
     }
 }
 
+/** Do both results hold the same high precision number? Used instead of the
+    double comparison of the change detection, the values must be compared
+    exactly, a narrowed double would hide a change in the last digits. */
+static bool lcl_IsSameBigFloat( const ScFormulaResult& rA, const ScFormulaResult& rB )
+{
+    const ScBigFloat* pA = ScGetBigFloatValue( rA.GetCellResultToken().get() );
+    const ScBigFloat* pB = ScGetBigFloatValue( rB.GetCellResultToken().get() );
+    return pA && pB && ( *pA == *pB );
+}
+
+
 void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
 {
     class RecursionCounter
@@ -1592,7 +1605,9 @@ void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
         {
             bool bIsValue = aResult.IsValue();  // the previous type
             // Did it converge?
-            if ((bIsValue && p->GetResultType() == svDouble && fabs(
+            if ((bIsValue && p->GetResultType() == svBigFloat &&
+                        lcl_IsSameBigFloat( aResult, ScFormulaResult( p->GetResultToken() ))) ||
+                    (bIsValue && p->GetResultType() == svDouble && fabs(
                             p->GetNumResult() - aResult.GetDouble()) <=
                         pDocument->GetDocOptions().GetIterEps()) ||
                     (!bIsValue && p->GetResultType() == svString &&
@@ -1659,7 +1674,8 @@ void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
                     // #i106045# use approxEqual to compare with stored value
                     bContentChanged = (eOld != eNew ||
                             (eNew == svDouble && !rtl::math::approxEqual( aResult.GetDouble(), aNewResult.GetDouble() )) ||
-                            (eNew == svString && aResult.GetString() != aNewResult.GetString()));
+                            (eNew == svString && aResult.GetString() != aNewResult.GetString()) ||
+                            (eNew == svBigFloat && !lcl_IsSameBigFloat( aResult, aNewResult )));
                 }
             }
 
@@ -1672,14 +1688,16 @@ void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
             StackVar eNew = aNewResult.GetCellResultType();
             bChanged = (eOld != eNew ||
                     (eNew == svDouble && aResult.GetDouble() != aNewResult.GetDouble()) ||
-                    (eNew == svString && aResult.GetString() != aNewResult.GetString()));
+                    (eNew == svString && aResult.GetString() != aNewResult.GetString()) ||
+                    (eNew == svBigFloat && !lcl_IsSameBigFloat( aResult, aNewResult )));
 
             // #i102616# handle special cases of initial results after loading (only if the sheet is still marked unchanged)
             if ( bChanged && !bContentChanged && pDocument->IsStreamValid(aPos.Tab()) )
             {
                 if ( ( eOld == svUnknown && ( eNew == svError || ( eNew == svDouble && aNewResult.GetDouble() == 0.0 ) ) ) ||
                      ( eOld == svHybridCell && eNew == svString && aResult.GetString() == aNewResult.GetString() ) ||
-                     ( eOld == svDouble && eNew == svDouble && rtl::math::approxEqual( aResult.GetDouble(), aNewResult.GetDouble() ) ) )
+                     ( eOld == svDouble && eNew == svDouble && rtl::math::approxEqual( aResult.GetDouble(), aNewResult.GetDouble() ) ) ||
+                     ( eOld == svBigFloat && eNew == svBigFloat && lcl_IsSameBigFloat( aResult, aNewResult ) ) )
                 {
                     // no change, see above
                 }
@@ -1691,7 +1709,12 @@ void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
         }
 
         // Precision as shown?
+        // A high precision result is excluded: rounding it to what a double
+        // can hold would replace the number with a less exact one behind the
+        // user's back. Its displayed digits are derived from the full value,
+        // so rounding "as shown" has nothing left to do for it.
         if ( aResult.IsValue() && !p->GetError()
+          && aResult.GetCellResultType() != svBigFloat
           && pDocument->GetDocOptions().IsCalcAsShown()
           && nFormatType != NUMBERFORMAT_DATE
           && nFormatType != NUMBERFORMAT_TIME
@@ -1718,7 +1741,8 @@ void ScFormulaCell::InterpretTail( ScInterpretTailParameter eTailParam )
             if( cMatrixFlag != MM_FORMULA && !pCode->IsHyperLink() )
                 aResult.SetToken( aResult.GetCellResultToken());
         }
-        if ( aResult.IsValue() && !::rtl::math::isFinite( aResult.GetDouble() ) )
+        if ( aResult.IsValue() && aResult.GetCellResultType() != svBigFloat
+          && !::rtl::math::isFinite( aResult.GetDouble() ) )
         {
             // Coded double error may occur via filter import.
             sal_uInt16 nErr = GetDoubleErrorValue( aResult.GetDouble());
@@ -1795,7 +1819,9 @@ sal_uLong ScFormulaCell::GetStandardFormat( SvNumberFormatter& rFormatter, sal_u
 	if ( nFormatIndex && (nFormat % SV_COUNTRY_LANGUAGE_OFFSET) == 0 )
 		return nFormatIndex;
     //! not ScFormulaCell::IsValue(), that could reinterpret the formula again.
-	if ( aResult.IsValue() )
+    // A high precision result is not narrowed here either, the type is all
+    // this function needs and it is a plain number type anyway.
+	if ( aResult.IsValue() && aResult.GetCellResultType() != svBigFloat )
 		return ScGlobal::GetStandardFormat(	aResult.GetDouble(), rFormatter, nFormat, nFormatType );
 	else
 		return ScGlobal::GetStandardFormat(	rFormatter, nFormat, nFormatType );

@@ -33,6 +33,9 @@
 #include "cellform.hxx"
 #include "cell.hxx"
 #include "document.hxx"
+#include "global.hxx"
+#include "bigfloattoken.hxx"
+#include <unotools/localedatawrapper.hxx>
 #include "formula/errorcodes.hxx"
 #include "sc.hrc"
 
@@ -130,6 +133,26 @@ void ScCellFormat::GetString( ScBaseCell* pCell, sal_uLong nFormat, String& rStr
                             rString.Erase();
 						else if ( pFCell->IsValue() )
 						{
+                            const formula::FormulaConstTokenRef xResultToken = pFCell->GetResultToken();
+                            const ScBigFloat* pBigFloat = ScGetBigFloatValue( xResultToken.get() );
+                            if ( pBigFloat )
+                            {
+                                // A high precision result must not be pushed
+                                // through the number formatter, that takes a
+                                // double and would drop the digits this value
+                                // exists for. It is displayed with all digits
+                                // it carries; making a cell's number format or
+                                // "Precision as shown" apply to it needs a
+                                // number formatter that works on decimal
+                                // strings, see main/sc/doc/bigfloat.md.
+                                const String aDecimalSep = ScGlobal::GetpLocaleData()->getNumDecimalSep();
+                                rString = ScBigFloatToString( *pBigFloat,
+                                        aDecimalSep.Len() == 1 ? aDecimalSep[0] : '.' );
+                                if ( !bNullVals && ScBigFloatIsZero( *pBigFloat ) )
+                                    rString.Erase();
+                            }
+                            else
+                            {
                             const SvNumberformat* pNumFmt = rFormatter.GetEntry( nFormat );
                             const bool bHasTextFormatCode = pNumFmt != NULL && pNumFmt->HasTextFormatCode();
                             if( pFCell->GetFormatType() == NUMBERFORMAT_LOGICAL && bHasTextFormatCode )
@@ -151,6 +174,7 @@ void ScCellFormat::GetString( ScBaseCell* pCell, sal_uLong nFormat, String& rStr
 								else
 									rFormatter.GetOutputString( fValue, nFormat, rString, ppColor );
 							}
+                            }
 						}
 						else
 						{
