@@ -148,11 +148,12 @@ public:
     inline  bool                IsEmptyDisplayedAsString() const;
 
     /** Test for cell result type formula::svDouble, including upper left if
-        formula::svMatrixCell. Also included is formula::svError for legacy, because previously
-        an error result was treated like a numeric value at some places in
-        ScFormulaCell. Also included is formula::svEmptyCell as a reference to an empty
-        cell usually is treated as numeric 0. Use GetCellResultType() for
-        details instead. */
+        formula::svMatrixCell. Also included is formula::svBigFloat, which is a
+        number of a different precision. Also included is formula::svError for
+        legacy, because previously an error result was treated like a numeric
+        value at some places in ScFormulaCell. Also included is
+        formula::svEmptyCell as a reference to an empty cell usually is treated
+        as numeric 0. Use GetCellResultType() for details instead. */
     inline  bool                IsValue() const;
 
     /** Determines whether or not the result is a string containing more than
@@ -173,12 +174,15 @@ public:
         set at all. */
     inline  void                SetDouble( double f );
 
-    /** Return value if type formula::svDouble or formula::svHybridCell or formula::svMatrixCell and upper
-        left formula::svDouble, else 0.0 */
+    /** Return value if type formula::svDouble or formula::svHybridCell or
+        formula::svMatrixCell and upper left formula::svDouble, else 0.0. For a
+        formula::svBigFloat result this is a lossy narrowing conversion, the
+        caller gets a double because it asked for one. */
     inline  double              GetDouble() const;
 
     /** Return string if type formula::svString or formula::svHybridCell or formula::svMatrixCell and
-        upper left formula::svString, else empty string. */
+        upper left formula::svString, or the exact decimal text of a
+        formula::svBigFloat result, else empty string. */
     inline  const String &      GetString() const;
 
     /** Return matrix if type formula::svMatrixCell and ScMatrix present, else NULL. */
@@ -413,7 +417,10 @@ inline bool ScFormulaResult::IsEmptyDisplayedAsString() const
 inline bool ScFormulaResult::IsValue() const
 {
     formula::StackVar sv = GetCellResultType();
-    return sv == formula::svDouble || sv == formula::svError || sv == formula::svEmptyCell;
+    // formula::svBigFloat is a number as well, it just happens to be carried
+    // by a token instead of the double in the union.
+    return sv == formula::svDouble || sv == formula::svBigFloat ||
+           sv == formula::svError || sv == formula::svEmptyCell;
 }
 
 inline bool ScFormulaResult::IsMultiline() const
@@ -482,6 +489,11 @@ inline double ScFormulaResult::GetDouble() const
             {
                 case formula::svHybridCell:
                     return mpToken->GetDouble();
+                case formula::svBigFloat:
+                    // Explicit narrowing for the legacy double APIs. This is
+                    // the only place a BigFloat is turned into a double, and
+                    // it happens only because the caller asked for a double.
+                    return mpToken->GetDouble();
                 case formula::svMatrixCell:
                     {
                         const ScMatrixCellResultToken* p =
@@ -510,6 +522,11 @@ inline const String & ScFormulaResult::GetString() const
         {
             case formula::svString:
             case formula::svHybridCell:
+                return mpToken->GetString();
+            case formula::svBigFloat:
+                // A number is not a string, but where text is asked for - the
+                // input line of a cell, a text conversion - this is the exact
+                // decimal representation the token holds, not a printed double.
                 return mpToken->GetString();
             case formula::svMatrixCell:
                 {

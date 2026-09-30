@@ -429,6 +429,8 @@ $(eval $(call gb_Library_add_exception_objects,sc,\
 	sc/source/core/tool/adiasync \
 	sc/source/core/tool/appoptio \
 	sc/source/core/tool/autoform \
+	sc/source/core/tool/bigfloat \
+	sc/source/core/tool/bigfloattoken \
 	sc/source/core/tool/callform \
 	sc/source/core/tool/cellform \
 	sc/source/core/tool/cellkeytranslator \
