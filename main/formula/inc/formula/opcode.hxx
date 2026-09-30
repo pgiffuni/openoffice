@@ -173,6 +173,7 @@ enum OpCodeEnum
 		ocSNormInv			= SC_OPCODE_S_NORM_INV,
 		ocGammaLn			= SC_OPCODE_GAMMA_LN,
 		ocGamma				= SC_OPCODE_GAMMA,
+		ocBigFloat			= SC_OPCODE_BIGFLOAT,
 		ocErrorType			= SC_OPCODE_ERROR_TYPE,
 		ocErrCell			= SC_OPCODE_ERR_CELL,
 		ocFormula			= SC_OPCODE_FORMULA,

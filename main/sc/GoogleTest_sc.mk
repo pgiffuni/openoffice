@@ -25,6 +25,7 @@ $(eval $(call gb_GoogleTest_GoogleTest,sc_stringutil))
 $(eval $(call gb_GoogleTest_add_exception_objects,sc_stringutil, \
 	sc/test/main \
 	sc/test/stringutiltests \
+	sc/test/bigfloattests \
 ))
 
 $(eval $(call gb_GoogleTest_set_include,sc_stringutil,\

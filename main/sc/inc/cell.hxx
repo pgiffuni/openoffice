@@ -416,6 +416,13 @@ public:
 	sal_Bool			IsValue();      // also sal_True if formula::svEmptyCell
 	double			GetValue();
 	double			GetValueAlways();	// ignore errors
+    /** The result token of the cell, or NULL if the result is stored as a
+        plain double, an error or an empty cell. Callers that need to
+        distinguish result types without losing precision (e.g. to display or
+        compare a high precision number) go through here, GetValue() is the
+        narrowing legacy way out. The reference is valid as long as the cell
+        result is not changed. */
+    formula::FormulaConstTokenRef  GetResultToken() const;
 	void			GetString( String& rString );
 	const ScMatrix* GetMatrix();
 	sal_Bool			GetMatrixOrigin( ScAddress& rPos ) const;

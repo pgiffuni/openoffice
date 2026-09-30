@@ -190,7 +190,8 @@
 #define SC_OPCODE_UNICODE           159
 #define SC_OPCODE_UNICHAR           160
 #define SC_OPCODE_GAMMA             161
-#define SC_OPCODE_STOP_1_PAR        162
+#define SC_OPCODE_BIGFLOAT          162
+#define SC_OPCODE_STOP_1_PAR        163
 
 /*** Functions with more than one parameters ***/
 #define SC_OPCODE_START_2_PAR       201

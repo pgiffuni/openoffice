@@ -42,6 +42,7 @@
 
 #include "interpre.hxx"
 #include "global.hxx"
+#include "bigfloattoken.hxx"
 #include "dbcolect.hxx"
 #include "cell.hxx"
 #include "callform.hxx"
@@ -504,11 +505,22 @@ void ScInterpreter::GetCellString( String& rStr, const ScBaseCell* pCell )
                 nErr = pFCell->GetErrCode();
                 if (pFCell->IsValue())
                 {
-                    double fVal = pFCell->GetValue();
-                    sal_uLong nIndex = pFormatter->GetStandardFormat(
-                                        NUMBERFORMAT_NUMBER,
-                                        ScGlobal::eLnge);
-                    pFormatter->GetInputLineString(fVal, nIndex, rStr);
+                    const ScBigFloatToken* pBigToken =
+                        ScGetBigFloatToken( pFCell->GetResultToken().get() );
+                    if (pBigToken)
+                    {
+                        // Its exact decimal text, not a double that was printed
+                        // with the standard number format.
+                        rStr = pBigToken->GetString();
+                    }
+                    else
+                    {
+                        double fVal = pFCell->GetValue();
+                        sal_uLong nIndex = pFormatter->GetStandardFormat(
+                                            NUMBERFORMAT_NUMBER,
+                                            ScGlobal::eLnge);
+                        pFormatter->GetInputLineString(fVal, nIndex, rStr);
+                    }
                 }
                 else
                     pFCell->GetString(rStr);
@@ -985,6 +997,30 @@ void ScInterpreter::PushCellResultToken( bool bDisplayEmptyAsString,
     }
     else
     {
+        // A reference to a cell with a high precision result stays a high
+        // precision number. It is read from the result token, before anything
+        // is narrowed to a double. The cell is interpreted first if that is
+        // needed, the same way ScFormulaCell::GetString() does it.
+        if (pCell->GetCellType() == CELLTYPE_FORMULA)
+        {
+            ScFormulaCell* pFCell = static_cast<ScFormulaCell*>( pCell );
+            if (pFCell->IsDirtyOrInTableOpDirty() && pDok->GetAutoCalc())
+                pFCell->Interpret();
+            const ScBigFloatToken* pBigToken =
+                ScGetBigFloatToken( pFCell->GetResultToken().get() );
+            if (pBigToken)
+            {
+                // The cell's own token is handed on as a copy, so the result
+                // never depends on the referenced cell staying alive.
+                PushBigFloatToken( *pBigToken );
+                if (pRetTypeExpr)
+                {
+                    *pRetTypeExpr = NUMBERFORMAT_NUMBER;
+                    *pRetIndexExpr = 0;
+                }
+                return;
+            }
+        }
         double fVal = GetCellValue( rAddress, pCell);
         PushDouble( fVal);
         if (pRetTypeExpr)
@@ -1056,6 +1092,13 @@ double ScInterpreter::PopDouble()
                 break;
             case svDouble:
                 return p->GetDouble();
+            case svBigFloat:
+                // Deliberately not narrowed here. Popping a high precision
+                // number in the double path would silently drop digits, so the
+                // caller is told that this combination is not implemented (yet)
+                // instead of being given a value that looks right.
+                SetError( errIllegalArgument );
+                break;
             case svEmptyCell:
             case svMissing:
                 return 0.0;
@@ -1698,6 +1741,67 @@ void ScInterpreter::PushError( sal_uInt16 nError )
     PushTempTokenWithoutError( new FormulaErrorToken( nGlobalError));
 }
 
+void ScInterpreter::PushBigFloatToken( const ScBigFloatToken& rToken )
+{
+    RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::PushBigFloatToken" );
+    const ScBigFloat& rValue = rToken.GetBigFloat();
+    if (!ScBigFloatIsFinite( rValue ))
+    {
+        // A high precision NaN or infinity is an arithmetic condition and is
+        // reported as one instead of leaking a C++ value into the document. The
+        // two are told apart on purpose: GetDoubleErrorValue() decodes a Calc
+        // error out of the bits of a double, and a Boost NaN carries no such
+        // code, so its payload would be read as an arbitrary error.
+        PushError( ScBigFloatIsNaN( rValue ) ?
+                static_cast< sal_uInt16 >( errNoValue ) :
+                static_cast< sal_uInt16 >( errIllegalFPOperation ) );
+        return;
+    }
+    if (!IfErrorPushError())
+        PushTempTokenWithoutError( new ScBigFloatToken( rToken ));
+}
+
+ScBigFloatToken* ScInterpreter::PopBigFloatToken()
+{
+    RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::PopBigFloatToken" );
+    if (sp)
+    {
+        FormulaToken* p = pStack[ sp - 1 ];
+        if (p->GetType() == svBigFloat)
+        {
+            --sp;
+            return static_cast< ScBigFloatToken* >( p );
+        }
+        if (p->GetType() == svError)
+        {
+            nGlobalError = p->GetError();
+        }
+    }
+    else
+        SetError( errUnknownStackVariable );
+    return NULL;
+}
+
+const ScBigFloatToken* ScInterpreter::GetBigFloatToken()
+{
+    RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::GetBigFloatToken" );
+    if (sp)
+    {
+        FormulaToken* p = pStack[ sp - 1 ];
+        if (p->GetType() == svBigFloat)
+            return static_cast< const ScBigFloatToken* >( p );
+    }
+    else
+        SetError( errUnknownStackVariable );
+    return NULL;
+}
+
+bool ScInterpreter::IsBigFloatToken()
+{
+    RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::IsBigFloatToken" );
+    return GetBigFloatToken() != NULL;
+}
+
 void ScInterpreter::PushParameterExpected()
 {
     RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::PushParameterExpected" );
@@ -1946,6 +2050,14 @@ double ScInterpreter::GetDouble()
             Pop();
             nVal = 0.0;
         break;
+        case svBigFloat:
+            // Not converted. The double path must not quietly lose the digits
+            // a high precision value carries, the error points at the missing
+            // promotion instead.
+            Pop();
+            SetError( errIllegalParameter );
+            nVal = 0.0;
+        break;
         default:
             PopError();
             SetError( errIllegalParameter);
@@ -1994,6 +2106,20 @@ const String& ScInterpreter::GetString()
         //break;
         case svString:
             return PopString();
+        //break;
+        case svBigFloat:
+        {
+            // A high precision number becomes text only here, and it becomes
+            // its exact decimal representation, not a double that was printed.
+            const ScBigFloatToken* pToken = GetBigFloatToken();
+            if (pToken)
+            {
+                aTempStr = pToken->GetString();
+                Pop();
+                return aTempStr;
+            }
+            return EMPTY_STRING;
+        }
         //break;
         case svSingleRef:
         {
@@ -3753,6 +3879,7 @@ StackVar ScInterpreter::Interpret()
                 case ocEuroConvert      : ScEuroConvert();              break;
                 case ocRoman            : ScRoman();                    break;
                 case ocArabic           : ScArabic();                   break;
+                case ocBigFloat         : ScBigFloat();                 break;
                 case ocInfo             : ScInfo();                     break;
                 case ocHyperLink        : ScHyperLink();                break;
                 case ocBahtText         : ScBahtText();                 break;
@@ -3906,6 +4033,15 @@ StackVar ScInterpreter::Interpret()
                     nGlobalError = pCur->GetError();
                 break;
                 case svDouble :
+                    if ( nFuncFmtType == NUMBERFORMAT_UNDEFINED )
+                    {
+                        nRetTypeExpr = NUMBERFORMAT_NUMBER;
+                        nRetIndexExpr = 0;
+                    }
+                break;
+                case svBigFloat :
+                    // A high precision number is a number, it just needs its
+                    // own token to stay a number.
                     if ( nFuncFmtType == NUMBERFORMAT_UNDEFINED )
                     {
                         nRetTypeExpr = NUMBERFORMAT_NUMBER;
