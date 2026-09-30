@@ -40,6 +40,8 @@
 #include "cell.hxx"
 #include "document.hxx"
 #include "dociter.hxx"
+#include "bigfloattoken.hxx"
+#include <unotools/localedatawrapper.hxx>
 #include "docoptio.hxx"
 #include "unitconv.hxx"
 #include "globstr.hrc"
@@ -2549,6 +2551,31 @@ void ScInterpreter::ScArabic()
         }
         if( bValid )
             PushInt( nValue );
+        else
+            PushIllegalArgument();
+    }
+}
+
+
+void ScInterpreter::ScBigFloat()
+{
+    RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::ScBigFloat" );
+    // The argument is text, and it is parsed as a decimal number directly.
+    // Going through a double would throw away exactly the digits this
+    // function exists for.
+    String aText( GetString() );
+    if (nGlobalError)
+        PushError( nGlobalError);
+    else
+    {
+        const LocaleDataWrapper& rLocaleData = *ScGlobal::GetpLocaleData();
+        ScBigFloat aValue;
+        if (ScBigFloatFromString( aText, rLocaleData.getNumDecimalSep(),
+                rLocaleData.getNumThousandSep(), aValue ))
+        {
+            ScBigFloatToken aToken( aValue );
+            PushBigFloatToken( aToken );
+        }
         else
             PushIllegalArgument();
     }

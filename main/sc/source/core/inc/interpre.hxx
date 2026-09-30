@@ -33,6 +33,11 @@
 #include <math.h>
 #include <map>
 
+// The high precision number type itself is defined in sc/inc/bigfloattoken.hxx
+// and pulls in Boost.Multiprecision. Only a forward declaration is needed
+// here, the interpreter exchanges tokens, not values.
+class ScBigFloatToken;
+
 // STLport definitions
 // This works around some issues with Boost
 //
@@ -358,6 +363,18 @@ void PushDoubleRef(SCCOL nCol1, SCROW nRow1, SCTAB nTab1,
                                  SCCOL nCol2, SCROW nRow2, SCTAB nTab2);
 void PushMatrix(ScMatrix* pMat);
 void PushError( sal_uInt16 nError );
+/** Pushes a copy of a high precision number as formula::svBigFloat. Non
+    finite values are turned into the corresponding Calc error, a NaN or an
+    infinity must never reach a cell. */
+void PushBigFloatToken( const ScBigFloatToken& rToken );
+/** Pops the value if it is a high precision number, returns NULL and consumes
+    nothing if it is not. */
+ScBigFloatToken* PopBigFloatToken();
+/** Whether the topmost stack value is a high precision number. */
+bool IsBigFloatToken();
+/** The topmost stack value as a high precision token, without consuming it.
+    Returns NULL for every other type. */
+const ScBigFloatToken* GetBigFloatToken();
 /// Raw stack type without default replacements.
 formula::StackVar GetRawStackType();
 /// Stack type with replacement of defaults, e.g. svMissing and formula::svEmptyCell will result in formula::svDouble.
@@ -473,6 +490,7 @@ void ScIsFormula();
 void ScFormula();
 void ScRoman();
 void ScArabic();
+void ScBigFloat();
 void ScIsNV();
 void ScIsErr();
 void ScIsError();

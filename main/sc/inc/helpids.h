@@ -779,3 +779,4 @@
 #define HID_FUNC_BITXOR                                         "SC_HID_FUNC_BITXOR"
 #define HID_FUNC_BITLSHIFT                                      "SC_HID_FUNC_BITLSHIFT"
 #define HID_FUNC_BITRSHIFT                                      "SC_HID_FUNC_BITRSHIFT"
+#define HID_FUNC_BIGFLOAT                                      "SC_HID_FUNC_BIGFLOAT"

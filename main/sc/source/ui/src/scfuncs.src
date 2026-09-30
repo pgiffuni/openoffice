@@ -9594,6 +9594,30 @@ Resource RID_SC_FUNCTION_DESCRIPTIONS2
 			Text [ en-US ] = "The number of bits the first argument is to be shifted by." ;
 		};
 	};
+	// -=*# Resource for function BIGFLOAT #*=-
+	Resource SC_OPCODE_BIGFLOAT
+	{
+		String 1 // Description
+		{
+			Text [ en-US ] = "Converts text to a high precision number with 50 decimal digits." ;
+		};
+		ExtraData =
+		{
+			0;
+			ID_FUNCTION_GRP_MATH;
+			U2S( HID_FUNC_BIGFLOAT );
+			1;	0;
+			0;
+		};
+		String 2 // Name of Parameter 1
+		{
+			Text [ en-US ] = "Text" ;
+		};
+		String 3 // Description of Parameter 1
+		{
+			Text [ en-US ] = "The decimal number as text, for example 1.23456789012345678901234567890123456789. The digits are taken as they are written, the text is not read as a double first." ;
+		};
+	};
 
 };
 

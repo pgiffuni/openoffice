@@ -192,6 +192,7 @@ const ScParameterClassification::RawData ScParameterClassification::pRawData[] =
     { ocTTest,           {{ ForceArray, ForceArray, Value, Value                 }, 0 }},
     { ocVar,             {{ Reference                                            }, 1 }},
     { ocVarA,            {{ Reference                                            }, 1 }},
+    { ocBigFloat,        {{ Value                                                }, 0 }},
     { ocVarP,            {{ Reference                                            }, 1 }},
     { ocVarPA,           {{ Reference                                            }, 1 }},
     { ocVLookup,         {{ Value, Reference, Value, Value                       }, 0 }},

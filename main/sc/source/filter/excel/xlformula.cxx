@@ -391,6 +391,7 @@ static const XclFunctionInfo saFuncTable_Odf[] =
     EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITOR" ),
     EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITRSHIFT" ),
     EXC_FUNCENTRY_ODF( ocNoName,        2,  2,  0,  "BITXOR" ),
+    EXC_FUNCENTRY_ODF( ocBigFloat,      1,  1,  0,  "ORG.OPENOFFICE.BIGFLOAT" ),
     EXC_FUNCENTRY_ODF( ocChiSqDist,     2,  3,  0,  "CHISQDIST" ),
     EXC_FUNCENTRY_ODF( ocChiSqInv,      2,  2,  0,  "CHISQINV" ),
     EXC_FUNCENTRY_ODF( ocKombin2,       2,  2,  0,  "COMBINA" ),
