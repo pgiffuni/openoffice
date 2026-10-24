@@ -110,7 +110,7 @@ TEST(BigFloatTest, LargeAndSmallExponents)
     EXPECT_EQ(Ascii("10000000000000000000000000000000000000000"), ScBigFloatToString(a));
     ASSERT_TRUE(ScBigFloatFromString(Ascii("1.5e-40"), aDot, aNoSep, a));
     EXPECT_EQ(Ascii("1.5e-40"), ScBigFloatToString(a));
-    EXPECT_EQ(Ascii("1.5E-40"), ScBigFloatToString(a, ','));
+    EXPECT_EQ(Ascii("1,5E-40"), ScBigFloatToString(a, ','));
 }
 
 TEST(BigFloatTest, RejectsInvalidInput)
@@ -137,7 +137,7 @@ TEST(BigFloatTest, DisplayUsesLocaleDecimalSeparatorAndUpperCaseExponent)
 {
     ScBigFloat aValue;
     ASSERT_TRUE(ScBigFloatFromString(Ascii("1.5e-7"), aDot, aNoSep, aValue));
-    EXPECT_EQ(Ascii("1.5E-7"), ScBigFloatToString(aValue, ','));
+    EXPECT_EQ(Ascii("1,5E-7"), ScBigFloatToString(aValue, ','));
 }
 
 TEST(BigFloatTest, NoImplicitConversionToDouble)

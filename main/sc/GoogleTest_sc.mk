@@ -37,6 +37,10 @@ $(eval $(call gb_GoogleTest_set_include,sc_stringutil,\
 $(eval $(call gb_GoogleTest_add_linked_libs,sc_stringutil, \
 	sal \
 	sc \
+	for \
+	forui \
+	tl \
+	vcl \
 	stl \
 	$(gb_STDLIBS) \
 ))
