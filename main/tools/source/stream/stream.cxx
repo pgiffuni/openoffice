@@ -2791,8 +2791,6 @@ sal_Size SvMemoryStream::PutData( const void* pData, sal_Size nCount )
     memcpy( pBuf+nPos, pData, (size_t)nCount);
 
     nPos += nCount;
-    if( nPos > nEndOfData )
-        nEndOfData = nPos;
     return nCount;
 }
 
