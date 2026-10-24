@@ -1744,7 +1744,7 @@ void ScInterpreter::PushError( sal_uInt16 nError )
 void ScInterpreter::PushBigFloatToken( const ScBigFloatToken& rToken )
 {
     RTL_LOGFILE_CONTEXT_AUTHOR( aLogger, "sc", "er", "ScInterpreter::PushBigFloatToken" );
-    const ScBigFloat& rValue = rToken.GetBigFloat();
+    const ::ScBigFloat& rValue = rToken.GetBigFloat();
     if (!ScBigFloatIsFinite( rValue ))
     {
         // A high precision NaN or infinity is an arithmetic condition and is

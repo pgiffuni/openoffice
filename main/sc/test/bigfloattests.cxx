@@ -28,6 +28,8 @@
 #include "bigfloat.hxx"
 #include "bigfloattoken.hxx"
 
+using namespace formula;
+
 namespace
 {
 
@@ -188,7 +190,7 @@ TEST(BigFloatTokenTest, CloneAndEquality)
 
     ScBigFloatToken aToken(aValue);
     EXPECT_EQ(formula::svBigFloat, aToken.GetType());
-    EXPECT_EQ(Ascii("1.000000000000000000000000000000000000001"), aToken.GetString());
+    EXPECT_EQ(String(Ascii("1.000000000000000000000000000000000000001")), aToken.GetString());
 
     FormulaTokenRef xClone = aToken.Clone();
     EXPECT_EQ(formula::svBigFloat, xClone->GetType());
@@ -239,7 +241,7 @@ TEST(BigFloatTest, RoundTrip)
         ASSERT_TRUE(ScBigFloatFromString(aToken.GetString(), aDot, aNoSep, aAgain))
                 << pTexts[i];
         EXPECT_EQ(aValue, aAgain) << pTexts[i];
-        EXPECT_EQ(Ascii(pTexts[i]), aToken.GetString()) << pTexts[i];
+        EXPECT_EQ(String(Ascii(pTexts[i])), aToken.GetString()) << pTexts[i];
     }
 }
 
