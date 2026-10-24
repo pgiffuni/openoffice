@@ -147,7 +147,7 @@ void ScCellFormat::GetString( ScBaseCell* pCell, sal_uLong nFormat, String& rStr
                                 // strings, see main/sc/doc/bigfloat.md.
                                 const String aDecimalSep = ScGlobal::GetpLocaleData()->getNumDecimalSep();
                                 rString = ScBigFloatToString( *pBigFloat,
-                                        aDecimalSep.Len() == 1 ? aDecimalSep[0] : '.' );
+                                        aDecimalSep.Len() == 1 ? aDecimalSep.GetChar(0) : '.' );
                                 if ( !bNullVals && ScBigFloatIsZero( *pBigFloat ) )
                                     rString.Erase();
                             }
