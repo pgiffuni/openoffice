@@ -42,7 +42,15 @@
 #  pragma GCC diagnostic ignored "-Wcpp"
 #endif
 
+#if defined(__GNUC__)
+#  pragma GCC visibility push(default)
+#endif
+
 #include <boost/multiprecision/cpp_dec_float.hpp>
+
+#if defined(__GNUC__)
+#  pragma GCC visibility pop
+#endif
 
 #if defined(_MSC_VER)
 #  pragma warning(pop)
@@ -70,6 +78,10 @@
     direction. Use ScBigFloatFromDouble() to promote and ScBigFloatToDouble()
     when a legacy API asks for a double and the loss of precision is accepted
     knowingly. */
+#if defined(__GNUC__)
+#  pragma GCC visibility push(default)
+#endif
+
 typedef ::boost::multiprecision::number<
         ::boost::multiprecision::cpp_dec_float< SC_BIGFLOAT_DIGITS > >     ScBigFloat;
 
@@ -117,5 +129,9 @@ rtl::OUString   ScBigFloatToString( const ScBigFloat& rValue );
     display in a document with a non-English locale. The exponent marker, if
     any, is upper cased to match Calc's number formatting. */
 rtl::OUString   ScBigFloatToString( const ScBigFloat& rValue, sal_Unicode cDecimalSep );
+
+#if defined(__GNUC__)
+#  pragma GCC visibility pop
+#endif
 
 #endif  // SC_BIGFLOAT_HXX
