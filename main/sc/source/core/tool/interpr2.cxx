@@ -2569,11 +2569,11 @@ void ScInterpreter::ScBigFloat()
     else
     {
         const LocaleDataWrapper& rLocaleData = *ScGlobal::GetpLocaleData();
-        ScBigFloat aValue;
+        ::ScBigFloat aBigValue;
         if (ScBigFloatFromString( aText, rLocaleData.getNumDecimalSep(),
-                rLocaleData.getNumThousandSep(), aValue ))
+                rLocaleData.getNumThousandSep(), aBigValue ))
         {
-            ScBigFloatToken aToken( aValue );
+            ScBigFloatToken aToken( aBigValue );
             PushBigFloatToken( aToken );
         }
         else
