@@ -34,6 +34,7 @@
 #include <tools/rcid.h>
 #include "analysis.hrc"
 #include "bessel.hxx"
+#include "quaternion.hxx"
 
 #define ADDIN_SERVICE				"com.sun.star.sheet.AddIn"
 #define MY_SERVICE					"com.sun.star.sheet.addin.Analysis"
@@ -1364,6 +1365,116 @@ STRING SAL_CALL AnalysisAddIn::getComplex( double fR, double fI, const ANY& rSuf
 	}
 
 	return Complex( fR, fI, bi ? 'i' : 'j' ).GetString();
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQuaternion( double fReal, double fI, double fJ, double fK )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+
+    return Quaternion( fReal, fI, fJ, fK ).GetString();
+}
+
+
+double SAL_CALL AnalysisAddIn::getQabs( double fReal, double fI, double fJ, double fK )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+
+    double fRet = Quaternion( fReal, fI, fJ, fK ).Abs();
+    RETURN_FINITE( fRet );
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQconj( double fReal, double fI, double fJ, double fK )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+
+    return Quaternion::Conjugate( Quaternion( fReal, fI, fJ, fK ) ).GetString();
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQinverse( double fReal, double fI, double fJ, double fK )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+
+    return Quaternion::Inverse( Quaternion( fReal, fI, fJ, fK ) ).GetString();
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQnormalize( double fReal, double fI, double fJ, double fK )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+
+    return Quaternion::Normalize( Quaternion( fReal, fI, fJ, fK ) ).GetString();
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQproduct( double fReal1, double fI1, double fJ1, double fK1,
+                                            double fReal2, double fI2, double fJ2, double fK2 )
+{
+    CHK_FINITE(fReal1);
+    CHK_FINITE(fI1);
+    CHK_FINITE(fJ1);
+    CHK_FINITE(fK1);
+    CHK_FINITE(fReal2);
+    CHK_FINITE(fI2);
+    CHK_FINITE(fJ2);
+    CHK_FINITE(fK2);
+
+    return Quaternion::Product(
+        Quaternion( fReal1, fI1, fJ1, fK1 ),
+        Quaternion( fReal2, fI2, fJ2, fK2 ) ).GetString();
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQrotate( double fReal, double fI, double fJ, double fK,
+                                           double fX, double fY, double fZ )
+{
+    CHK_FINITE(fReal);
+    CHK_FINITE(fI);
+    CHK_FINITE(fJ);
+    CHK_FINITE(fK);
+    CHK_FINITE(fX);
+    CHK_FINITE(fY);
+    CHK_FINITE(fZ);
+
+    return Quaternion::Rotate( Quaternion( fReal, fI, fJ, fK ), fX, fY, fZ );
+}
+
+
+STRING SAL_CALL AnalysisAddIn::getQslerp( double fReal1, double fI1, double fJ1, double fK1,
+                                          double fReal2, double fI2, double fJ2, double fK2,
+                                          double fT )
+{
+    CHK_FINITE(fReal1);
+    CHK_FINITE(fI1);
+    CHK_FINITE(fJ1);
+    CHK_FINITE(fK1);
+    CHK_FINITE(fReal2);
+    CHK_FINITE(fI2);
+    CHK_FINITE(fJ2);
+    CHK_FINITE(fK2);
+    CHK_FINITE(fT);
+
+    return Quaternion::Slerp(
+        Quaternion( fReal1, fI1, fJ1, fK1 ),
+        Quaternion( fReal2, fI2, fJ2, fK2 ),
+        fT ).GetString();
 }
 
 

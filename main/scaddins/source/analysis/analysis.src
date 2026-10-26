@@ -3678,6 +3678,510 @@ Resource RID_ANALYSIS_FUNCTION_DESCRIPTIONS
 		};
 	};
 
+	Resource ANALYSIS_Quaternion
+	{
+		String 1	// description Quaternion
+		{
+			Text [ en-US ] = "Constructs a quaternion from its four coefficients";
+		};
+
+		String 2 // name of parameter 1			Quaternion
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Quaternion
+		{
+			Text [ en-US ] = "The real coefficient";
+		};
+
+		String 4 // name of parameter 2			Quaternion
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Quaternion
+		{
+			Text [ en-US ] = "The i coefficient";
+		};
+
+		String 6 // name of parameter 3			Quaternion
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Quaternion
+		{
+			Text [ en-US ] = "The j coefficient";
+		};
+
+		String 8 // name of parameter 4			Quaternion
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Quaternion
+		{
+			Text [ en-US ] = "The k coefficient";
+		};
+	};
+
+	Resource ANALYSIS_Qabs
+	{
+		String 1	// description Qabs
+		{
+			Text [ en-US ] = "Returns the absolute value (magnitude) of a quaternion";
+		};
+
+		String 2 // name of parameter 1			Qabs
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Qabs
+		{
+			Text [ en-US ] = "The real coefficient";
+		};
+
+		String 4 // name of parameter 2			Qabs
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Qabs
+		{
+			Text [ en-US ] = "The i coefficient";
+		};
+
+		String 6 // name of parameter 3			Qabs
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Qabs
+		{
+			Text [ en-US ] = "The j coefficient";
+		};
+
+		String 8 // name of parameter 4			Qabs
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Qabs
+		{
+			Text [ en-US ] = "The k coefficient";
+		};
+	};
+
+	Resource ANALYSIS_Qconj
+	{
+		String 1	// description Qconj
+		{
+			Text [ en-US ] = "Returns the conjugate of a quaternion";
+		};
+
+		String 2 // name of parameter 1			Qconj
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Qconj
+		{
+			Text [ en-US ] = "The real coefficient";
+		};
+
+		String 4 // name of parameter 2			Qconj
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Qconj
+		{
+			Text [ en-US ] = "The i coefficient";
+		};
+
+		String 6 // name of parameter 3			Qconj
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Qconj
+		{
+			Text [ en-US ] = "The j coefficient";
+		};
+
+		String 8 // name of parameter 4			Qconj
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Qconj
+		{
+			Text [ en-US ] = "The k coefficient";
+		};
+	};
+
+	Resource ANALYSIS_Qinverse
+	{
+		String 1	// description Qinverse
+		{
+			Text [ en-US ] = "Returns the inverse of a quaternion";
+		};
+
+		String 2 // name of parameter 1			Qinverse
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Qinverse
+		{
+			Text [ en-US ] = "The real coefficient";
+		};
+
+		String 4 // name of parameter 2			Qinverse
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Qinverse
+		{
+			Text [ en-US ] = "The i coefficient";
+		};
+
+		String 6 // name of parameter 3			Qinverse
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Qinverse
+		{
+			Text [ en-US ] = "The j coefficient";
+		};
+
+		String 8 // name of parameter 4			Qinverse
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Qinverse
+		{
+			Text [ en-US ] = "The k coefficient";
+		};
+	};
+
+	Resource ANALYSIS_Qnormalize
+	{
+		String 1	// description Qnormalize
+		{
+			Text [ en-US ] = "Returns the normalized (unit) quaternion";
+		};
+
+		String 2 // name of parameter 1			Qnormalize
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Qnormalize
+		{
+			Text [ en-US ] = "The real coefficient";
+		};
+
+		String 4 // name of parameter 2			Qnormalize
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Qnormalize
+		{
+			Text [ en-US ] = "The i coefficient";
+		};
+
+		String 6 // name of parameter 3			Qnormalize
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Qnormalize
+		{
+			Text [ en-US ] = "The j coefficient";
+		};
+
+		String 8 // name of parameter 4			Qnormalize
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Qnormalize
+		{
+			Text [ en-US ] = "The k coefficient";
+		};
+	};
+
+	Resource ANALYSIS_Qproduct
+	{
+		String 1	// description Qproduct
+		{
+			Text [ en-US ] = "Returns the product of two quaternions (Hamilton product)";
+		};
+
+		String 2 // name of parameter 1			Qproduct
+		{
+			Text [ en-US ] = "Real1";
+		};
+
+		String 3 // description of parameter 1	Qproduct
+		{
+			Text [ en-US ] = "The real coefficient of the first quaternion";
+		};
+
+		String 4 // name of parameter 2			Qproduct
+		{
+			Text [ en-US ] = "I1";
+		};
+
+		String 5 // description of parameter 2	Qproduct
+		{
+			Text [ en-US ] = "The i coefficient of the first quaternion";
+		};
+
+		String 6 // name of parameter 3			Qproduct
+		{
+			Text [ en-US ] = "J1";
+		};
+
+		String 7 // description of parameter 3	Qproduct
+		{
+			Text [ en-US ] = "The j coefficient of the first quaternion";
+		};
+
+		String 8 // name of parameter 4			Qproduct
+		{
+			Text [ en-US ] = "K1";
+		};
+
+		String 9 // description of parameter 4	Qproduct
+		{
+			Text [ en-US ] = "The k coefficient of the first quaternion";
+		};
+
+		String 10 // name of parameter 5			Qproduct
+		{
+			Text [ en-US ] = "Real2";
+		};
+
+		String 11 // description of parameter 5	Qproduct
+		{
+			Text [ en-US ] = "The real coefficient of the second quaternion";
+		};
+
+		String 12 // name of parameter 6			Qproduct
+		{
+			Text [ en-US ] = "I2";
+		};
+
+		String 13 // description of parameter 6	Qproduct
+		{
+			Text [ en-US ] = "The i coefficient of the second quaternion";
+		};
+
+		String 14 // name of parameter 7			Qproduct
+		{
+			Text [ en-US ] = "J2";
+		};
+
+		String 15 // description of parameter 7	Qproduct
+		{
+			Text [ en-US ] = "The j coefficient of the second quaternion";
+		};
+
+		String 16 // name of parameter 8			Qproduct
+		{
+			Text [ en-US ] = "K2";
+		};
+
+		String 17 // description of parameter 8	Qproduct
+		{
+			Text [ en-US ] = "The k coefficient of the second quaternion";
+		};
+	};
+
+	Resource ANALYSIS_Qrotate
+	{
+		String 1	// description Qrotate
+		{
+			Text [ en-US ] = "Returns the result of rotating a vector by a quaternion";
+		};
+
+		String 2 // name of parameter 1			Qrotate
+		{
+			Text [ en-US ] = "Real";
+		};
+
+		String 3 // description of parameter 1	Qrotate
+		{
+			Text [ en-US ] = "The real coefficient of the quaternion";
+		};
+
+		String 4 // name of parameter 2			Qrotate
+		{
+			Text [ en-US ] = "I";
+		};
+
+		String 5 // description of parameter 2	Qrotate
+		{
+			Text [ en-US ] = "The i coefficient of the quaternion";
+		};
+
+		String 6 // name of parameter 3			Qrotate
+		{
+			Text [ en-US ] = "J";
+		};
+
+		String 7 // description of parameter 3	Qrotate
+		{
+			Text [ en-US ] = "The j coefficient of the quaternion";
+		};
+
+		String 8 // name of parameter 4			Qrotate
+		{
+			Text [ en-US ] = "K";
+		};
+
+		String 9 // description of parameter 4	Qrotate
+		{
+			Text [ en-US ] = "The k coefficient of the quaternion";
+		};
+
+		String 10 // name of parameter 5			Qrotate
+		{
+			Text [ en-US ] = "VectorX";
+		};
+
+		String 11 // description of parameter 5	Qrotate
+		{
+			Text [ en-US ] = "The x component of the vector to rotate";
+		};
+
+		String 12 // name of parameter 6			Qrotate
+		{
+			Text [ en-US ] = "VectorY";
+		};
+
+		String 13 // description of parameter 6	Qrotate
+		{
+			Text [ en-US ] = "The y component of the vector to rotate";
+		};
+
+		String 14 // name of parameter 7			Qrotate
+		{
+			Text [ en-US ] = "VectorZ";
+		};
+
+		String 15 // description of parameter 7	Qrotate
+		{
+			Text [ en-US ] = "The z component of the vector to rotate";
+		};
+	};
+
+	Resource ANALYSIS_Qslerp
+	{
+		String 1	// description Qslerp
+		{
+			Text [ en-US ] = "Returns the spherical linear interpolation between two quaternions";
+		};
+
+		String 2 // name of parameter 1			Qslerp
+		{
+			Text [ en-US ] = "Real1";
+		};
+
+		String 3 // description of parameter 1	Qslerp
+		{
+			Text [ en-US ] = "The real coefficient of the first quaternion";
+		};
+
+		String 4 // name of parameter 2			Qslerp
+		{
+			Text [ en-US ] = "I1";
+		};
+
+		String 5 // description of parameter 2	Qslerp
+		{
+			Text [ en-US ] = "The i coefficient of the first quaternion";
+		};
+
+		String 6 // name of parameter 3			Qslerp
+		{
+			Text [ en-US ] = "J1";
+		};
+
+		String 7 // description of parameter 3	Qslerp
+		{
+			Text [ en-US ] = "The j coefficient of the first quaternion";
+		};
+
+		String 8 // name of parameter 4			Qslerp
+		{
+			Text [ en-US ] = "K1";
+		};
+
+		String 9 // description of parameter 4	Qslerp
+		{
+			Text [ en-US ] = "The k coefficient of the first quaternion";
+		};
+
+		String 10 // name of parameter 5			Qslerp
+		{
+			Text [ en-US ] = "Real2";
+		};
+
+		String 11 // description of parameter 5	Qslerp
+		{
+			Text [ en-US ] = "The real coefficient of the second quaternion";
+		};
+
+		String 12 // name of parameter 6			Qslerp
+		{
+			Text [ en-US ] = "I2";
+		};
+
+		String 13 // description of parameter 6	Qslerp
+		{
+			Text [ en-US ] = "The i coefficient of the second quaternion";
+		};
+
+		String 14 // name of parameter 7			Qslerp
+		{
+			Text [ en-US ] = "J2";
+		};
+
+		String 15 // description of parameter 7	Qslerp
+		{
+			Text [ en-US ] = "The j coefficient of the second quaternion";
+		};
+
+		String 16 // name of parameter 8			Qslerp
+		{
+			Text [ en-US ] = "K2";
+		};
+
+		String 17 // description of parameter 8	Qslerp
+		{
+			Text [ en-US ] = "The k coefficient of the second quaternion";
+		};
+
+		String 18 // name of parameter 9			Qslerp
+		{
+			Text [ en-US ] = "T";
+		};
+
+		String 19 // description of parameter 9	Qslerp
+		{
+			Text [ en-US ] = "The interpolation parameter (0 to 1)";
+		};
+	};
+
 	Resource ANALYSIS_Fvschedule
 	{
 		String 1	// description Fvschedule

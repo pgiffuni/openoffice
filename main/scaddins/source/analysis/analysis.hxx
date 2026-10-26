@@ -195,6 +195,15 @@ public:
     virtual STRING SAL_CALL     getImcosh( const STRING& aNum );
     virtual STRING SAL_CALL     getImsech( const STRING& aNum );
     virtual STRING SAL_CALL     getImcsch( const STRING& aNum );
+    virtual STRING SAL_CALL     getQuaternion( double fReal, double fI, double fJ, double fK );
+    virtual double SAL_CALL     getQabs( double fReal, double fI, double fJ, double fK );
+    virtual STRING SAL_CALL     getQconj( double fReal, double fI, double fJ, double fK );
+    virtual STRING SAL_CALL     getQinverse( double fReal, double fI, double fJ, double fK );
+    virtual STRING SAL_CALL     getQnormalize( double fReal, double fI, double fJ, double fK );
+    virtual STRING SAL_CALL     getQproduct( double fReal1, double fI1, double fJ1, double fK1, double fReal2, double fI2, double fJ2, double fK2 );
+    virtual STRING SAL_CALL     getQrotate( double fReal, double fI, double fJ, double fK, double fX, double fY, double fZ );
+    virtual STRING SAL_CALL     getQslerp( double fReal1, double fI1, double fJ1, double fK1, double fReal2, double fI2, double fJ2, double fK2, double fT );
+
 	virtual STRING SAL_CALL		getComplex( double fReal, double fImaginary, const ANY& rSuffix );
 
 	virtual double SAL_CALL		getConvert( double fVal, const STRING& aFromUnit, const STRING& aToUnit );

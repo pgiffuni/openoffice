@@ -109,6 +109,16 @@ const FuncDataBase pFuncDatas[] =
     FUNCDATA( Imsech,           UNIQUE,     STDPAR,     1,          FDCat_Tech ),
     FUNCDATA( Imcsch,           UNIQUE,     STDPAR,     1,          FDCat_Tech ),
     FUNCDATA( Complex,          UNIQUE,     STDPAR,     3,          FDCat_Tech ),
+
+    FUNCDATA( Quaternion,       UNIQUE,     STDPAR,     4,          FDCat_Tech ),
+    FUNCDATA( Qabs,             UNIQUE,     STDPAR,     4,          FDCat_Tech ),
+    FUNCDATA( Qconj,            UNIQUE,     STDPAR,     4,          FDCat_Tech ),
+    FUNCDATA( Qinverse,         UNIQUE,     STDPAR,     4,          FDCat_Tech ),
+    FUNCDATA( Qnormalize,       UNIQUE,     STDPAR,     4,          FDCat_Tech ),
+    FUNCDATA( Qproduct,         UNIQUE,     STDPAR,     8,          FDCat_Tech ),
+    FUNCDATA( Qrotate,          UNIQUE,     STDPAR,     7,          FDCat_Tech ),
+    FUNCDATA( Qslerp,           UNIQUE,     STDPAR,     9,          FDCat_Tech ),
+
     FUNCDATA( Convert,          DOUBLE,     STDPAR,     3,          FDCat_Tech ),
     FUNCDATA( Amordegrc,        UNIQUE,     INTPAR,     7,          FDCat_Finance ),
     FUNCDATA( Amorlinc,         UNIQUE,     INTPAR,     7,          FDCat_Finance ),

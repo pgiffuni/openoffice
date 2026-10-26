@@ -937,4 +937,67 @@ Resource RID_ANALYSIS_DEFFUNCTION_NAMES
 		};
 	};
 
+	StringArray ANALYSIS_DEFFUNCNAME_Quaternion
+	{
+		ItemList =
+		{
+			< "QUATERNION"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qabs
+	{
+		ItemList =
+		{
+			< "QABS"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qconj
+	{
+		ItemList =
+		{
+			< "QCONJUGATE"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qinverse
+	{
+		ItemList =
+		{
+			< "QINVERSE"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qnormalize
+	{
+		ItemList =
+		{
+			< "QNORMALIZE"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qproduct
+	{
+		ItemList =
+		{
+			< "QPRODUCT"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qrotate
+	{
+		ItemList =
+		{
+			< "QROTATE"; >;
+		};
+	};
+
+	StringArray ANALYSIS_DEFFUNCNAME_Qslerp
+	{
+		ItemList =
+		{
+			< "QSLERP"; >;
+		};
+	};
 };
