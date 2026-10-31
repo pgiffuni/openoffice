@@ -1,0 +1,243 @@
+diff -ruN '--exclude=build' a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/GuiCallback.java a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/GuiCallback.java
+--- a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/GuiCallback.java	2026-10-31 12:50:10.738821077 -0500
++++ a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/GuiCallback.java	2026-10-31 12:50:10.820980275 -0500
+@@ -23,6 +23,11 @@
+                         String threadTitle,
+                         String alertMessage);
+ 
++	/**
++	 * Called when the interrupt loop has been exited.
++	 */
++	void exitInterrupt();
++
+     /**
+      * Returns whether the current thread is the GUI's event thread.
+      * This information is required to avoid blocking the event thread
+@@ -35,4 +40,4 @@
+      * is necessary when the GUI event thread itself has been stopped.
+      */
+     void dispatchNextGuiEvent() throws InterruptedException;
+-}
++}
+\ No newline at end of file
+diff -ruN '--exclude=build' a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/Main.java a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/Main.java
+--- a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/Main.java	2026-10-31 12:50:10.738759977 -0500
++++ a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/Main.java	2026-10-31 12:50:10.820918274 -0500
+@@ -8,6 +8,7 @@
+ 
+ import java.io.InputStream;
+ import java.io.PrintStream;
++import java.net.URL;
+ 
+ import javax.swing.JFrame;
+ 
+@@ -126,7 +127,7 @@
+      * Console window.
+      */
+     public InputStream getIn() {
+-        return debugGui.getConsole().getIn();
++        return null;//return debugGui.getConsole().getIn();
+     }
+ 
+     /**
+@@ -134,7 +135,7 @@
+      * Console window.
+      */
+     public PrintStream getOut() {
+-        return debugGui.getConsole().getOut();
++        return null;//return debugGui.getConsole().getOut();
+     }
+ 
+     /**
+@@ -142,7 +143,7 @@
+      * Console window.
+      */
+     public PrintStream getErr() {
+-        return debugGui.getConsole().getErr();
++        return null;//return debugGui.getConsole().getErr();
+     }
+ 
+     /**
+@@ -349,6 +350,41 @@
+     {
+         throw new IllegalStateException();
+     }
++    
++    // shortcut methods
++
++    public void addWindowListener(java.awt.event.WindowListener l) {
++        debugGui.addWindowListener(l);
++    }
++
++    public void highlighLineInScriptWindow(URL url, int lineNum) {
++		debugGui.highlighLineInScriptWindow(url, lineNum);
++	}
++    
++    public Object runScriptWindow(URL scriptUrl) throws Exception
++    {
++		return debugGui.runScriptWindow(scriptUrl);
++	}
++    
++    public void openFile(URL scriptUrl, Scriptable scope, Runnable closeCallback) {
++		debugGui.openFile(scriptUrl, scope, closeCallback);
++	}
++    
++    public void toFront() {
++        debugGui.toFront();
++    }
++    
++    public void showScriptWindow(URL url) {
++        debugGui.showScriptWindow(url);
++    }
++
++    public boolean isModified(URL url) {
++        return debugGui.isModified(url);
++    }
++
++	public String getText(URL url) {
++		return debugGui.getText(url);
++	}
+ 
+     /**
+      * Class to consolidate all internal implementations of interfaces
+@@ -408,4 +444,4 @@
+             return scope;
+         }
+     }
+-}
++}
+\ No newline at end of file
+diff -ruN '--exclude=build' a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/SwingGui.java a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/SwingGui.java
+--- a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/SwingGui.java	2026-10-31 12:50:10.738572376 -0500
++++ a/b/rhino1.7.7.2/src/org/mozilla/javascript/tools/debugger/SwingGui.java	2026-10-31 12:50:10.820710973 -0500
+@@ -59,6 +59,30 @@
+  * GUI for the Rhino debugger.
+  */
+ public class SwingGui extends JFrame implements GuiCallback {
++    public void exitInterrupt() {
++    }
++
++    public void highlighLineInScriptWindow(java.net.URL url, int lineNum) {
++    }
++
++    public Object runScriptWindow(java.net.URL scriptUrl) throws Exception {
++        return null;
++    }
++
++    public void openFile(java.net.URL scriptUrl, org.mozilla.javascript.Scriptable scope, Runnable closeCallback) {
++    }
++
++    public void showScriptWindow(java.net.URL url) {
++    }
++
++    public boolean isModified(java.net.URL url) {
++        return false;
++    }
++
++    public String getText(java.net.URL url) {
++        return null;
++    }
++
+ 
+     /**
+      * Serializable magic number.
+@@ -3546,4 +3570,5 @@
+ 
+         }
+     }
++
+ }
+--- a/b/rhino1.7.7.2/build.xml	2026-10-31 09:48:32.480907700 -0500
++++ a/b/rhino1.7.7.2/build.xml	2026-10-31 12:50:10.919781853 -0500
+@@ -0,0 +1,77 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- This Source Code Form is subject to the terms of the Mozilla Public
++   - License, v. 2.0. If a copy of the MPL was not distributed with this
++   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
++
++<project name="rhino" default="jar" basedir=".">
++
++  <target name="init">
++    <property file="build.properties"/>
++    <property name="src.dir" value="src"/>
++    <property name="build.dir" value="${build.dir}"/>
++    <property name="classes.dir" value="${classes}"/>
++    <property name="rhino.jar" value="${rhino.jar}"/>
++    <property name="small-rhino.jar" value="${small-rhino.jar}"/>
++    <property name="dist.dir" value="${dist.dir}"/>
++    <property name="dist.name" value="${dist.name}"/>
++
++    <mkdir dir="${classes.dir}"/>
++    <mkdir dir="${build.dir}"/>
++    <mkdir dir="${dist.dir}"/>
++  </target>
++
++  <target name="compile" depends="init">
++    <javac srcdir="${src.dir}"
++           destdir="${classes.dir}"
++           debug="${debug}"
++           target="${target-jvm}"
++           source="${source-level}"
++           includeantruntime="false"
++           encoding="UTF-8">
++      <compilerarg value="-Xlint:-options"/>
++    </javac>
++  </target>
++
++  <target name="jar" depends="compile">
++    <jar destfile="${build.dir}/${rhino.jar}"
++         compress="${jar-compression}"
++         manifest="MANIFEST.MF">
++      <fileset dir="${classes.dir}"/>
++    </jar>
++  </target>
++
++  <target name="small-jar" depends="compile">
++    <jar destfile="${build.dir}/${small-rhino.jar}"
++         compress="${jar-compression}"
++         manifest="MANIFEST.MF">
++      <fileset dir="${classes.dir}">
++        <exclude name="**/tools/**"/>
++        <exclude name="**/debugger/**"/>
++        <exclude name="**/shell/**"/>
++        <exclude name="**/jsc/**"/>
++        <exclude name="**/idswitch/**"/>
++        <exclude name="**/classfile/**"/>
++      </fileset>
++    </jar>
++  </target>
++
++  <target name="dist" depends="jar, small-jar">
++    <mkdir dir="${dist.dir}/${dist.name}/lib"/>
++    <copy file="${build.dir}/${rhino.jar}"
++          tofile="${dist.dir}/${dist.name}/lib/${rhino.jar}"/>
++    <copy file="${build.dir}/${small-rhino.jar}"
++          tofile="${dist.dir}/${dist.name}/lib/${small-rhino.jar}"/>
++    <copy file="LICENSE.txt"
++          todir="${dist.dir}/${dist.name}"/>
++    <copy file="README.md"
++          todir="${dist.dir}/${dist.name}"/>
++    <copy file="RELEASE-NOTES.md"
++          todir="${dist.dir}/${dist.name}"/>
++  </target>
++
++  <target name="clean">
++    <delete dir="${build.dir}"/>
++    <delete dir="${dist.dir}"/>
++  </target>
++
++</project>
+\ No newline at end of file
+--- a/b/rhino1.7.7.2/MANIFEST.MF	2026-10-31 09:48:32.480907700 -0500
++++ a/b/rhino1.7.7.2/MANIFEST.MF	2026-10-31 12:50:10.932394214 -0500
+@@ -0,0 +1,9 @@
++Manifest-Version: 1.0
++Main-Class: org.mozilla.javascript.tools.shell.Main
++Implementation-Version: 1.7.7.2
++Implementation-Title: Mozilla Rhino
++Implementation-Vendor: Mozilla Foundation
++Implementation-URL: http://www.mozilla.org/rhino
++Built-Date: ${build.date}
++Built-Time: ${build.time}
++Sealed: true
+\ No newline at end of file

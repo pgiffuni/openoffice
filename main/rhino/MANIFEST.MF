@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Main-Class: org.mozilla.javascript.tools.shell.Main
+Implementation-Version: 1.7.7.2
+Implementation-Title: Mozilla Rhino
+Implementation-Vendor: Mozilla Foundation
+Implementation-URL: http://www.mozilla.org/rhino
+Built-Date: ${build.date}
+Built-Time: ${build.time}
+Sealed: true

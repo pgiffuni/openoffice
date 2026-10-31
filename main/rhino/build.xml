@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<project name="rhino" default="jar" basedir=".">
+
+  <target name="init">
+    <property file="build.properties"/>
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="${build.dir}"/>
+    <property name="classes.dir" value="${classes}"/>
+    <property name="rhino.jar" value="${rhino.jar}"/>
+    <property name="small-rhino.jar" value="${small-rhino.jar}"/>
+    <property name="dist.dir" value="${dist.dir}"/>
+    <property name="dist.name" value="${dist.name}"/>
+
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src.dir}"
+           destdir="${classes.dir}"
+           debug="${debug}"
+           target="${target-jvm}"
+           source="${source-level}"
+           includeantruntime="false"
+           encoding="UTF-8">
+      <compilerarg value="-Xlint:-options"/>
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${build.dir}/${rhino.jar}"
+         compress="${jar-compression}"
+         manifest="MANIFEST.MF">
+      <fileset dir="${classes.dir}"/>
+    </jar>
+  </target>
+
+  <target name="small-jar" depends="compile">
+    <jar destfile="${build.dir}/${small-rhino.jar}"
+         compress="${jar-compression}"
+         manifest="MANIFEST.MF">
+      <fileset dir="${classes.dir}">
+        <exclude name="**/tools/**"/>
+        <exclude name="**/debugger/**"/>
+        <exclude name="**/shell/**"/>
+        <exclude name="**/jsc/**"/>
+        <exclude name="**/idswitch/**"/>
+        <exclude name="**/classfile/**"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="dist" depends="jar, small-jar">
+    <mkdir dir="${dist.dir}/${dist.name}/lib"/>
+    <copy file="${build.dir}/${rhino.jar}"
+          tofile="${dist.dir}/${dist.name}/lib/${rhino.jar}"/>
+    <copy file="${build.dir}/${small-rhino.jar}"
+          tofile="${dist.dir}/${dist.name}/lib/${small-rhino.jar}"/>
+    <copy file="LICENSE.txt"
+          todir="${dist.dir}/${dist.name}"/>
+    <copy file="README.md"
+          todir="${dist.dir}/${dist.name}"/>
+    <copy file="RELEASE-NOTES.md"
+          todir="${dist.dir}/${dist.name}"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist.dir}"/>
+  </target>
+
+</project>

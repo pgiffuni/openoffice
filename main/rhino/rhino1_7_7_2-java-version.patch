@@ -1,0 +1,10 @@
+--- misc/build/rhino1.7.7.2/build.properties
++++ misc/build/rhino1.7.7.2/build.properties
+@@ -18,8 +18,8 @@
+ 
+ # compilation settings
+ debug: on
+-target-jvm: 1.6
+-source-level: 1.6
++target-jvm: 1.8
++source-level: 1.8

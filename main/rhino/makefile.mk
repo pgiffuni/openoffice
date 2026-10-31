@@ -44,14 +44,13 @@ all:
 
 #.IF "$(DISABLE_RHINO)" == ""
 
-TARFILE_NAME=rhino1_7R3
-TARFILE_MD5=99d94103662a8d0b571e247a77432ac5
-TARFILE_ROOTDIR=rhino1_7R3
+TARFILE_NAME=rhino1_7_7_2
+TARFILE_MD5=afcf570784ebd919c1d484a6d0d3fcd6
+TARFILE_ROOTDIR=rhino1.7.7.2
 
-ADDITIONAL_FILES= \
-	toolsrc/org/mozilla/javascript/tools/debugger/OfficeScriptInfo.java
+ADDITIONAL_FILES=
 
-PATCH_FILES=rhino1_7R3.patch rhino1_7R3-java-version.patch
+PATCH_FILES=rhino1_7_7_2.patch
 
 .IF "$(JAVACISGCJ)"=="yes"
 JAVA_HOME=
