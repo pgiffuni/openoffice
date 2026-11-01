@@ -222,6 +222,9 @@ ZLIB3RDLIB=-lz
 ZLIB3RDLIB=-lzlib
 .ENDIF
 .IF "$(SYSTEM_JPEG)"=="YES"
+.IF "$(JPEG_TURBO_CFLAGS)" != ""
+CDEFS+=$(JPEG_TURBO_CFLAGS)
+.ENDIF
 .IF "$(SOLAR_JAVA)" != "" && "$(JDK)" != "gcj" && "$(OS)" != "MACOSX" && "$(OS)" != "OS2"
 #i34482# Blackdown/Sun jdk is in the libsearch patch and has a libjpeg :-(
 .IF "$(OS)" == "FREEBSD"
