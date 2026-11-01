@@ -25,6 +25,7 @@
 #include "precompiled_svtools.hxx"
 
 #include <tools/solar.h>
+#include <osl/diagnose.h>
 
 extern "C"
 {
@@ -119,14 +120,13 @@ extern "C" void init_destination (j_compress_ptr cinfo)
 extern "C" boolean empty_output_buffer (j_compress_ptr cinfo)
 {
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-  size_t nWritten = 0;
-
-  while (nWritten < (size_t) BUF_SIZE) {
-    size_t nBytes = dest->outfile->Write(dest->buffer + nWritten,
-                                         BUF_SIZE - nWritten);
-    if (nBytes == 0 || nBytes > (size_t) BUF_SIZE - nWritten)
-      ERREXIT(cinfo, JERR_FILE_WRITE);
-    nWritten += nBytes;
+  size_t nBytes = dest->outfile->Write( dest->buffer, BUF_SIZE );
+  OSL_TRACE( "JPEG destination write: requested=%lu, nBytes=%lu",
+             (unsigned long) BUF_SIZE, (unsigned long) nBytes );
+  if ( nBytes != (size_t) BUF_SIZE )
+  {
+    ERREXIT(cinfo, JERR_FILE_WRITE);
+    return sal_False;
   }
 
   dest->pub.next_output_byte = dest->buffer;
@@ -139,16 +139,16 @@ extern "C" void term_destination (j_compress_ptr cinfo)
 {
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
   size_t datacount = BUF_SIZE - dest->pub.free_in_buffer;
-  size_t nWritten = 0;
+  size_t nBytes;
 
-  /* Write any data remaining in the buffer */
-  while (nWritten < datacount) {
-    size_t nBytes = dest->outfile->Write(dest->buffer + nWritten,
-                                         datacount - nWritten);
-    if (nBytes == 0 || nBytes > datacount - nWritten)
-      ERREXIT(cinfo, JERR_FILE_WRITE);
-    nWritten += nBytes;
-  }
+  /* Write any data remaining in the buffer. */
+  if ( datacount == 0 )
+    return;
+  nBytes = dest->outfile->Write( dest->buffer, datacount );
+  OSL_TRACE( "JPEG destination write: requested=%lu, nBytes=%lu",
+             (unsigned long) datacount, (unsigned long) nBytes );
+  if ( nBytes != datacount )
+    ERREXIT(cinfo, JERR_FILE_WRITE);
 }
 
 extern "C" void jpeg_svstream_dest (j_compress_ptr cinfo, void* out)
@@ -270,17 +270,19 @@ extern "C" void skip_input_data (j_decompress_ptr cinfo, long num_bytes)
    * any trouble anyway --- large skips are infrequent.
    */
   if (num_bytes > 0) {
-    /* Preserve a synthetic EOI so libjpeg can report the premature end. */
-    if (src->synthetic_eoi)
-      return;
-    while (num_bytes > (long) src->pub.bytes_in_buffer) {
+    while (num_bytes > (long) src->pub.bytes_in_buffer && !src->synthetic_eoi) {
       num_bytes -= (long) src->pub.bytes_in_buffer;
       (void) fill_input_buffer(cinfo);
       /* note we assume that fill_input_buffer will never return sal_False,
        * so suspension need not be handled.
        */
-      if (src->synthetic_eoi)
-        return;
+    }
+    if (src->synthetic_eoi) {
+      size_t nSkip = src->pub.bytes_in_buffer > 2 ?
+          src->pub.bytes_in_buffer - 2 : 0;
+      if (nSkip > (size_t) num_bytes)
+        nSkip = (size_t) num_bytes;
+      num_bytes = (long) nSkip;
     }
     src->pub.next_input_byte += (size_t) num_bytes;
     src->pub.bytes_in_buffer -= (size_t) num_bytes;
@@ -461,6 +463,10 @@ void* JPEGReader::CreateBitmap( void* pParam )
 
 void JPEGReader::ApplyExifOrientation()
 {
+	/* Rotate() uses tenths of a degree; positive angles rotate counterclockwise. */
+	static const long nRotate90CounterClockwise = 900;
+	static const long nRotate180 = 1800;
+	static const long nRotate90Clockwise = 2700;
 	Bitmap aOrientedBmp( aBmp );
 	sal_Bool bSuccess = sal_True;
 
@@ -470,26 +476,30 @@ void JPEGReader::ApplyExifOrientation()
 			bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_HORZ );
 			break;
 		case 3:
-			bSuccess = aOrientedBmp.Rotate( 1800, Color( COL_WHITE ) );
+			bSuccess = aOrientedBmp.Rotate( nRotate180, Color( COL_WHITE ) );
 			break;
 		case 4:
 			bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_VERT );
 			break;
 		case 5: // transpose
-			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			bSuccess = aOrientedBmp.Rotate( nRotate90CounterClockwise,
+				Color( COL_WHITE ) );
 			if( bSuccess )
 				bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_VERT );
 			break;
 		case 6:
-			bSuccess = aOrientedBmp.Rotate( 2700, Color( COL_WHITE ) );
+			bSuccess = aOrientedBmp.Rotate( nRotate90Clockwise,
+				Color( COL_WHITE ) );
 			break;
 		case 7: // transverse
-			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			bSuccess = aOrientedBmp.Rotate( nRotate90CounterClockwise,
+				Color( COL_WHITE ) );
 			if( bSuccess )
 				bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_HORZ );
 			break;
 		case 8:
-			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			bSuccess = aOrientedBmp.Rotate( nRotate90CounterClockwise,
+				Color( COL_WHITE ) );
 			break;
 		default:
 			break;
@@ -545,7 +555,7 @@ void JPEGReader::FillBitmap()
 		{
 			nAlignedWidth = AlignedWidth4Bytes( pAcc->Width() * 24L );
 
-			for( long nY = 0L; nY < nHeight; nY++ )
+			for( long nY = 0L, nDestY = nHeight - 1; nY < nHeight; nY++, nDestY-- )
 			{
                 // #122985# Added fast-lane implementations using CopyScanline with direct supported mem formats
                 static bool bCheckOwnReader(true);
@@ -565,7 +575,7 @@ void JPEGReader::FillBitmap()
                         ::std::swap(*aTmp, *(aTmp + 2));
                     }
 
-                    pAcc->CopyScanline(nY, aSource, BMP_FORMAT_24BIT_TC_BGR, nWidth * 3);
+                    pAcc->CopyScanline(nDestY, aSource, BMP_FORMAT_24BIT_TC_BGR, nWidth * 3);
                 }
                 else
                 {
@@ -577,7 +587,7 @@ void JPEGReader::FillBitmap()
                         aColor.SetRed( *pTmp++ );
                         aColor.SetGreen( *pTmp++ );
                         aColor.SetBlue( *pTmp++ );
-                        pAcc->SetPixel( nY, nX, aColor );
+                        pAcc->SetPixel( nDestY, nX, aColor );
                     }
                 }
 			}
@@ -899,6 +909,18 @@ sal_Bool ExportJPEG( SvStream& rOStm, const Graphic& rGraphic,
                  bool* pExportWasGrey
                 )
 {
+	if ( pFilterData == NULL )
+	{
+		const GfxLink aLink( rGraphic.GetLink() );
+		const sal_uInt8* pData = aLink.GetData();
+		const sal_uLong nDataSize = aLink.GetDataSize();
+
+		if ( aLink.GetType() == GFX_LINK_TYPE_NATIVE_JPG && pData != NULL &&
+			aLink.GetUserId() == rGraphic.GetChecksum() &&
+			JPEGIsNativePassthroughSafe( pData, nDataSize ) )
+			return aLink.ExportNative( rOStm );
+	}
+
 	JPEGWriter aJPEGWriter( rOStm, pFilterData, pExportWasGrey );
 	return aJPEGWriter.Write( rGraphic );
 }
