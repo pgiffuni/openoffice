@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "setjmp.h"
 #include "jpeglib.h"
 #include "jerror.h"
@@ -51,6 +52,7 @@ my_output_message (j_common_ptr cinfo)
 {
 	char buffer[JMSG_LENGTH_MAX];
 	(*cinfo->err->format_message) (cinfo, buffer);
+	OSL_TRACE( "JPEG: %s", buffer );
 }
 
 /* TODO: when incompatible changes are possible again
@@ -63,104 +65,202 @@ void SetJpegPreviewSizeHint( int nWidth, int nHeight )
     nPreviewHeight = nHeight;
 }
 
+static unsigned int ReadExifU16( const JOCTET * pData, int bLittleEndian )
+{
+	if ( bLittleEndian )
+		return (unsigned int) pData[0] | ( (unsigned int) pData[1] << 8 );
+	return ( (unsigned int) pData[0] << 8 ) | (unsigned int) pData[1];
+}
+
+static unsigned long ReadExifU32( const JOCTET * pData, int bLittleEndian )
+{
+	if ( bLittleEndian )
+		return (unsigned long) pData[0] |
+			   ( (unsigned long) pData[1] << 8 ) |
+			   ( (unsigned long) pData[2] << 16 ) |
+			   ( (unsigned long) pData[3] << 24 );
+	return ( (unsigned long) pData[0] << 24 ) |
+		   ( (unsigned long) pData[1] << 16 ) |
+		   ( (unsigned long) pData[2] << 8 ) |
+		   (unsigned long) pData[3];
+}
+
+static unsigned long GetExifOrientation( j_decompress_ptr cinfo )
+{
+	jpeg_saved_marker_ptr pMarker;
+
+	for ( pMarker = cinfo->marker_list; pMarker != NULL; pMarker = pMarker->next )
+	{
+		const JOCTET * pTiff;
+		size_t nTiffLength;
+		unsigned long nIfdOffset;
+		unsigned int nEntryCount;
+		unsigned int nEntry;
+		int bLittleEndian;
+
+		if ( pMarker->marker != JPEG_APP0 + 1 || pMarker->data_length < 14 ||
+			memcmp( pMarker->data, "Exif\0\0", 6 ) != 0 )
+			continue;
+
+		pTiff = pMarker->data + 6;
+		nTiffLength = pMarker->data_length - 6;
+		if ( pTiff[0] == 'I' && pTiff[1] == 'I' )
+			bLittleEndian = 1;
+		else if ( pTiff[0] == 'M' && pTiff[1] == 'M' )
+			bLittleEndian = 0;
+		else
+			continue;
+
+		if ( ReadExifU16( pTiff + 2, bLittleEndian ) != 42 )
+			continue;
+
+		nIfdOffset = ReadExifU32( pTiff + 4, bLittleEndian );
+		if ( nIfdOffset > nTiffLength || nTiffLength - nIfdOffset < 2 )
+			continue;
+
+		nEntryCount = ReadExifU16( pTiff + nIfdOffset, bLittleEndian );
+		if ( nEntryCount > ( nTiffLength - nIfdOffset - 2 ) / 12 )
+			continue;
+
+		for ( nEntry = 0; nEntry < nEntryCount; ++nEntry )
+		{
+			const JOCTET * pEntry = pTiff + nIfdOffset + 2 + nEntry * 12;
+			unsigned int nTag = ReadExifU16( pEntry, bLittleEndian );
+			unsigned int nType = ReadExifU16( pEntry + 2, bLittleEndian );
+			unsigned long nCount = ReadExifU32( pEntry + 4, bLittleEndian );
+			unsigned int nOrientation;
+
+			if ( nTag != 0x0112 || nType != 3 || nCount != 1 )
+				continue;
+
+			nOrientation = ReadExifU16( pEntry + 8, bLittleEndian );
+			if ( nOrientation >= 1 && nOrientation <= 8 )
+				return nOrientation;
+		}
+	}
+
+	return 1;
+}
+
 void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 {
-	struct jpeg_decompress_struct	cinfo;
-	struct my_error_mgr				jerr;
-    struct JPEGCreateBitmapParam    aCreateBitmapParam;
+	struct jpeg_decompress_struct *pcinfo;
+	struct my_error_mgr *pjerr;
+	struct JPEGCreateBitmapParam	aCreateBitmapParam;
 	HPBYTE							pDIB;
 	HPBYTE							pTmp;
-    long                            nWidth;
-    long                            nHeight;
-    long                            nAlignedWidth;
-    JSAMPLE * range_limit;
-    HPBYTE pScanLineBuffer = NULL;
-    long nScanLineBufferComponents = 0;
-    // declare bDecompCreated volatile because of gcc
-    // warning: variable 'bDecompCreated' might be clobbered by `longjmp' or `vfork'
-	volatile long					bDecompCreated = 0;
+	long							nWidth;
+	long							nHeight;
+	long							nAlignedWidth;
+	JSAMPLE *						range_limit;
+	HPBYTE volatile pScanLineBuffer = NULL;
+	long							nScanLineBufferComponents = 0;
+	volatile long bDecompCreated = 0;
+
+	*pLines = 0;
+	memset( &aCreateBitmapParam, 0, sizeof( aCreateBitmapParam ) );
+	pcinfo = (struct jpeg_decompress_struct *) malloc( sizeof( *pcinfo ) );
+	pjerr = (struct my_error_mgr *) malloc( sizeof( *pjerr ) );
+	if ( pcinfo == NULL || pjerr == NULL )
+	{
+		free( pcinfo );
+		free( pjerr );
+		return;
+	}
 
 	/* Falls der Stream nicht ausreicht (IO_PENDING)
 	 wird ueber ein longjmp in der Schleife nach Exit
 	 gesprungen, wir geben dann die Anzahl
 	 der bisher bearbeiteten Scanlines zurueck*/
-	if ( setjmp( jerr.setjmp_buffer ) )
+	if ( setjmp( pjerr->setjmp_buffer ) )
 		goto Exit;
 
-	cinfo.err = jpeg_std_error( &jerr.pub );
-	jerr.pub.error_exit = my_error_exit;
-	jerr.pub.output_message = my_output_message;
+	pcinfo->err = jpeg_std_error( &pjerr->pub );
+	pjerr->pub.error_exit = my_error_exit;
+	pjerr->pub.output_message = my_output_message;
 
-	jpeg_create_decompress( &cinfo );
+	jpeg_create_decompress( pcinfo );
 	bDecompCreated = 1;
-        jpeg_svstream_src( &cinfo, pIStm );
-	jpeg_read_header( &cinfo, sal_True );
+	jpeg_svstream_src( pcinfo, pIStm );
+	jpeg_save_markers( pcinfo, JPEG_APP0 + 1, 0xFFFF );
+	jpeg_read_header( pcinfo, sal_True );
+	aCreateBitmapParam.nExifOrientation = GetExifOrientation( pcinfo );
 
-	cinfo.scale_num = 1;
-	cinfo.scale_denom = 1;
-	cinfo.output_gamma = 1.0;
-	cinfo.raw_data_out = sal_False;
-	cinfo.quantize_colors = sal_False;
-	if ( cinfo.jpeg_color_space == JCS_YCbCr )
-	    cinfo.out_color_space = JCS_RGB;
-	else if ( cinfo.jpeg_color_space == JCS_YCCK )
-	    cinfo.out_color_space = JCS_CMYK;
+	pcinfo->scale_num = 1;
+	pcinfo->scale_denom = 1;
+	pcinfo->output_gamma = 1.0;
+	pcinfo->raw_data_out = sal_False;
+	pcinfo->quantize_colors = sal_False;
+	if ( pcinfo->jpeg_color_space == JCS_YCbCr )
+		pcinfo->out_color_space = JCS_RGB;
+	else if ( pcinfo->jpeg_color_space == JCS_YCCK )
+		pcinfo->out_color_space = JCS_CMYK;
 
-	OSL_ASSERT(cinfo.out_color_space == JCS_CMYK || cinfo.out_color_space == JCS_GRAYSCALE || cinfo.out_color_space == JCS_RGB);
+	OSL_ASSERT( pcinfo->out_color_space == JCS_CMYK ||
+				pcinfo->out_color_space == JCS_GRAYSCALE ||
+				pcinfo->out_color_space == JCS_RGB );
 
-    /* change scale for preview import */
-    if( nPreviewWidth || nPreviewHeight )
-    {
-		if( nPreviewWidth == 0 ) {
-			nPreviewWidth = ( cinfo.image_width*nPreviewHeight )/cinfo.image_height;
-			if( nPreviewWidth <= 0 )
+	/* Change scale for preview import. */
+	if ( nPreviewWidth || nPreviewHeight )
+	{
+		if ( nPreviewWidth == 0 )
+		{
+			nPreviewWidth = ( pcinfo->image_width * nPreviewHeight ) /
+				pcinfo->image_height;
+			if ( nPreviewWidth <= 0 )
 				nPreviewWidth = 1;
-		} else if( nPreviewHeight == 0 ) {
-			nPreviewHeight = ( cinfo.image_height*nPreviewWidth )/cinfo.image_width;
-			if( nPreviewHeight <= 0 )
+		}
+		else if ( nPreviewHeight == 0 )
+		{
+			nPreviewHeight = ( pcinfo->image_height * nPreviewWidth ) /
+				pcinfo->image_width;
+			if ( nPreviewHeight <= 0 )
 				nPreviewHeight = 1;
 		}
 
-        for( cinfo.scale_denom = 1; cinfo.scale_denom < 8; cinfo.scale_denom *= 2 )
-        {
-            if( cinfo.image_width < nPreviewWidth * cinfo.scale_denom )
-                break;
-            if( cinfo.image_height < nPreviewHeight * cinfo.scale_denom )
-                break;
-        }
+		for ( pcinfo->scale_denom = 1; pcinfo->scale_denom < 8;
+			  pcinfo->scale_denom *= 2 )
+		{
+			if ( pcinfo->image_width < nPreviewWidth * pcinfo->scale_denom )
+				break;
+			if ( pcinfo->image_height < nPreviewHeight * pcinfo->scale_denom )
+				break;
+		}
 
-        if( cinfo.scale_denom > 1 )
-        {
-            cinfo.dct_method            = JDCT_FASTEST;
-            cinfo.do_fancy_upsampling   = sal_False;
-            cinfo.do_block_smoothing    = sal_False;
-        }
-    }
+		if ( pcinfo->scale_denom > 1 )
+		{
+			pcinfo->dct_method = JDCT_FASTEST;
+			pcinfo->do_fancy_upsampling = sal_False;
+			pcinfo->do_block_smoothing = sal_False;
+		}
+	}
 
-	jpeg_start_decompress( &cinfo );
+	jpeg_start_decompress( pcinfo );
 
-	nWidth = cinfo.output_width;
-	nHeight = cinfo.output_height;
+	nWidth = pcinfo->output_width;
+	nHeight = pcinfo->output_height;
 	aCreateBitmapParam.nWidth = nWidth;
 	aCreateBitmapParam.nHeight = nHeight;
 
-    aCreateBitmapParam.density_unit = cinfo.density_unit;
-    aCreateBitmapParam.X_density = cinfo.X_density;
-    aCreateBitmapParam.Y_density = cinfo.Y_density;
-    aCreateBitmapParam.bGray = cinfo.output_components == 1;
+	aCreateBitmapParam.density_unit = pcinfo->density_unit;
+	aCreateBitmapParam.X_density = pcinfo->X_density;
+	aCreateBitmapParam.Y_density = pcinfo->Y_density;
+	aCreateBitmapParam.bGray = pcinfo->output_components == 1;
 	pDIB = CreateBitmap( pJPEGReader, &aCreateBitmapParam );
-    nAlignedWidth = aCreateBitmapParam.nAlignedWidth;
-    range_limit=cinfo.sample_range_limit;
+	nAlignedWidth = aCreateBitmapParam.nAlignedWidth;
+	range_limit = pcinfo->sample_range_limit;
 
-	if ( cinfo.out_color_space == JCS_CMYK )
+	if ( pcinfo->out_color_space == JCS_CMYK )
 	{
-    		nScanLineBufferComponents = cinfo.output_width * 4;
+		nScanLineBufferComponents = pcinfo->output_width * 4;
 		pScanLineBuffer = rtl_allocateMemory( nScanLineBufferComponents );
+		if ( pScanLineBuffer == NULL )
+			ERREXIT1( pcinfo, JERR_OUT_OF_MEMORY, 0 );
 	}
 
-	if( pDIB )
+	if ( pDIB )
 	{
-		if( aCreateBitmapParam.bTopDown )
+		if ( aCreateBitmapParam.bTopDown )
 			pTmp = pDIB;
 		else
 		{
@@ -170,117 +270,138 @@ void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 
 		for ( *pLines = 0; *pLines < nHeight; (*pLines)++ )
 		{
-		    if (pScanLineBuffer!=NULL) { // in other words cinfo.out_color_space == JCS_CMYK
-			int i;
-			int j;
-			jpeg_read_scanlines( &cinfo, (JSAMPARRAY) &pScanLineBuffer, 1 );
-			// convert CMYK to RGB
-			for( i=0, j=0; i < nScanLineBufferComponents; i+=4, j+=3 )
+			if ( pScanLineBuffer != NULL )
 			{
-			    int c_=255-pScanLineBuffer[i+0];
-			    int m_=255-pScanLineBuffer[i+1];
-			    int y_=255-pScanLineBuffer[i+2];
-			    int k_=255-pScanLineBuffer[i+3];
-			    pTmp[j+0]=range_limit[ 255L - ( c_ + k_ ) ];
-			    pTmp[j+1]=range_limit[ 255L - ( m_ + k_ ) ];
-			    pTmp[j+2]=range_limit[ 255L - ( y_ + k_ ) ];
-			}
-		    } else {
-			jpeg_read_scanlines( &cinfo, (JSAMPARRAY) &pTmp, 1 );
-		    }
-		    /* PENDING ??? */
-		    if ( cinfo.err->msg_code == 113 )
-			break;
+				int i;
+				int j;
+				jpeg_read_scanlines( pcinfo, (JSAMPARRAY) &pScanLineBuffer, 1 );
+				/* Convert CMYK to RGB. */
+				for ( i = 0, j = 0; i < nScanLineBufferComponents; i += 4, j += 3 )
+				{
+					int nC = 255 - pScanLineBuffer[i];
+					int nM = 255 - pScanLineBuffer[i + 1];
+					int nY = 255 - pScanLineBuffer[i + 2];
+					int nK = 255 - pScanLineBuffer[i + 3];
 
-		    pTmp += nAlignedWidth;
+					pTmp[j] = range_limit[ 255L - ( nC + nK ) ];
+					pTmp[j + 1] = range_limit[ 255L - ( nM + nK ) ];
+					pTmp[j + 2] = range_limit[ 255L - ( nY + nK ) ];
+				}
+			}
+			else
+				jpeg_read_scanlines( pcinfo, (JSAMPARRAY) &pTmp, 1 );
+
+			/* PENDING ??? */
+			if ( pcinfo->err->msg_code == 113 )
+				break;
+
+			pTmp += nAlignedWidth;
 		}
 	}
 
-    if ( pDIB )
-    {
-        jpeg_finish_decompress( &cinfo );
-    }
-    else
-    {
-        jpeg_abort_decompress( &cinfo );
-    }
-
-	if (pScanLineBuffer!=NULL) {
-	    rtl_freeMemory( pScanLineBuffer );
-	    pScanLineBuffer=NULL;
+	if ( pDIB )
+	{
+		jpeg_finish_decompress( pcinfo );
+	}
+	else
+	{
+		jpeg_abort_decompress( pcinfo );
 	}
 
 Exit:
 
-	if( bDecompCreated )
-		jpeg_destroy_decompress( &cinfo );
+	if ( pScanLineBuffer != NULL )
+		rtl_freeMemory( pScanLineBuffer );
+	if ( bDecompCreated )
+	{
+		bDecompCreated = 0;
+		jpeg_destroy_decompress( pcinfo );
+	}
+	free( pjerr );
+	free( pcinfo );
 }
 
 long WriteJPEG( void* pJPEGWriter, void* pOStm,
 				long nWidth, long nHeight, long bGreys,
 				long nQualityPercent, void* pCallbackData )
 {
-	struct jpeg_compress_struct	cinfo;
-	struct my_error_mgr			jerr;
+	struct jpeg_compress_struct *pcinfo;
+	struct my_error_mgr *pjerr;
 	void*						pScanline;
 	long						nY;
-    // declare bCompCreated, bRet volatile because of gcc
-    // warning: variable 'bCompCreated' might be clobbered by `longjmp' or `vfork'
 	volatile long				bCompCreated = 0;
 	volatile long				bRet = 0;
 
-	if ( setjmp( jerr.setjmp_buffer ) )
+	if ( nWidth <= 0 || nHeight <= 0 ||
+		 (unsigned long) nWidth > 65535UL || (unsigned long) nHeight > 65535UL )
+		return 0;
+
+	pcinfo = (struct jpeg_compress_struct *) malloc( sizeof( *pcinfo ) );
+	pjerr = (struct my_error_mgr *) malloc( sizeof( *pjerr ) );
+	if ( pcinfo == NULL || pjerr == NULL )
+	{
+		free( pcinfo );
+		free( pjerr );
+		return 0;
+	}
+
+	if ( setjmp( pjerr->setjmp_buffer ) )
 		goto Exit;
 
-	cinfo.err = jpeg_std_error( &jerr.pub );
-	jerr.pub.error_exit = my_error_exit;
-	jerr.pub.output_message = my_output_message;
+	pcinfo->err = jpeg_std_error( &pjerr->pub );
+	pjerr->pub.error_exit = my_error_exit;
+	pjerr->pub.output_message = my_output_message;
 
-	jpeg_create_compress( &cinfo );
+	jpeg_create_compress( pcinfo );
 	bCompCreated = 1;
 
-	jpeg_svstream_dest( &cinfo, pOStm );
+	jpeg_svstream_dest( pcinfo, pOStm );
 
-	cinfo.image_width = (JDIMENSION) nWidth;
-	cinfo.image_height = (JDIMENSION) nHeight;
+	pcinfo->image_width = (JDIMENSION) nWidth;
+	pcinfo->image_height = (JDIMENSION) nHeight;
 	if ( bGreys )
 	{
-		cinfo.input_components = 1;
-		cinfo.in_color_space = JCS_GRAYSCALE;
+		pcinfo->input_components = 1;
+		pcinfo->in_color_space = JCS_GRAYSCALE;
 	}
 	else
 	{
-		cinfo.input_components = 3;
-		cinfo.in_color_space = JCS_RGB;
+		pcinfo->input_components = 3;
+		pcinfo->in_color_space = JCS_RGB;
 	}
 
-	jpeg_set_defaults( &cinfo );
-	jpeg_set_quality( &cinfo, (int) nQualityPercent, sal_False );
+	jpeg_set_defaults( pcinfo );
+	jpeg_set_quality( pcinfo, (int) nQualityPercent, sal_False );
 
 	if ( ( nWidth > 128 ) || ( nHeight > 128 ) )
-		jpeg_simple_progression( &cinfo );
+		jpeg_simple_progression( pcinfo );
 
-	jpeg_start_compress( &cinfo, sal_True );
+	jpeg_start_compress( pcinfo, sal_True );
 
 	for( nY = 0; nY < nHeight; nY++ )
 	{
 		pScanline = GetScanline( pJPEGWriter, nY );
 
-		if( pScanline )
-			jpeg_write_scanlines( &cinfo, (JSAMPARRAY) &pScanline, 1 );
+		if ( !pScanline ||
+			 jpeg_write_scanlines( pcinfo, (JSAMPARRAY) &pScanline, 1 ) != 1 )
+			goto Exit;
 
 		if( JPEGCallback( pCallbackData, nY * 100L / nHeight ) )
 			goto Exit;
 	}
 
+	jpeg_finish_compress( pcinfo );
 	bRet = 1;
-
-	jpeg_finish_compress(&cinfo);
 
 Exit:
 
 	if ( bCompCreated )
-		jpeg_destroy_compress( &cinfo );
+	{
+		bCompCreated = 0;
+		jpeg_destroy_compress( pcinfo );
+	}
+	free( pjerr );
+	free( pcinfo );
 
 	return bRet;
 }

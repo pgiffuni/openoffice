@@ -61,9 +61,11 @@ class JPEGReader : public GraphicReader
 	long				nFormerPos;
 	long				nLastLines;
     sal_Bool            bSetLogSize;
+	unsigned long		nExifOrientation;
 
 	Graphic				CreateIntermediateGraphic( const Bitmap& rBitmap, long nLines );
 	void				FillBitmap();
+	void				ApplyExifOrientation();
 
 public:
 
