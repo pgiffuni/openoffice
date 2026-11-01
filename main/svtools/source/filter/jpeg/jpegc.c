@@ -257,7 +257,8 @@ void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 	bDecompCreated = 1;
 	jpeg_svstream_src( pcinfo, pIStm );
 	jpeg_save_markers( pcinfo, JPEG_APP0 + 1, 0xFFFF );
-	jpeg_read_header( pcinfo, sal_True );
+	if ( jpeg_read_header( pcinfo, sal_True ) != JPEG_HEADER_OK )
+		goto Exit;
 	aCreateBitmapParam.nExifOrientation = GetExifOrientation( pcinfo );
 
 	pcinfo->scale_num = 1;
@@ -295,9 +296,9 @@ void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 		for ( pcinfo->scale_denom = 1; pcinfo->scale_denom < 8;
 			  pcinfo->scale_denom *= 2 )
 		{
-			if ( pcinfo->image_width < nPreviewWidth * pcinfo->scale_denom )
+			if ( pcinfo->image_width / pcinfo->scale_denom < nPreviewWidth )
 				break;
-			if ( pcinfo->image_height < nPreviewHeight * pcinfo->scale_denom )
+			if ( pcinfo->image_height / pcinfo->scale_denom < nPreviewHeight )
 				break;
 		}
 
@@ -309,7 +310,8 @@ void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 		}
 	}
 
-	jpeg_start_decompress( pcinfo );
+	if ( !jpeg_start_decompress( pcinfo ) )
+		goto Exit;
 
 	nWidth = pcinfo->output_width;
 	nHeight = pcinfo->output_height;
