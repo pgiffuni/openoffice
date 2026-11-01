@@ -59,6 +59,7 @@ void*	GetScanline( void* pJPEGWriter, long nY );
 
 void	ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines );
 void*	CreateBitmap( void* pJPEGReader, void* pJPEGCreateBitmapParam );
+sal_Bool JPEGIsNativePassthroughSafe( const sal_uInt8* pData, sal_uLong nSize );
 
 /* TODO: when incompatible changes are possible again
    the preview size hint should be redone */

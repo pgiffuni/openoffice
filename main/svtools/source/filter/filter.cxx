@@ -1819,7 +1819,10 @@ sal_uInt16 GraphicFilter::ImportGraphic( Graphic& rGraphic, const String& rPath,
 			{
 				rIStream.Seek( nStmBegin );
 				rIStream.Read( pBuf, nBufSize );
-				rGraphic.SetLink( GfxLink( pBuf, nBufSize, eLinkType, sal_True ) );
+				GfxLink aLink( pBuf, nBufSize, eLinkType, sal_True );
+				if ( eLinkType == GFX_LINK_TYPE_NATIVE_JPG )
+					aLink.SetUserId( rGraphic.GetChecksum() );
+				rGraphic.SetLink( aLink );
 			}
 		}
 	}
