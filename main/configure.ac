@@ -4408,16 +4408,67 @@ if test -n "$with_system_jpeg" -o -n "$with_system_libs" && \
 	test "$with_system_jpeg" != "no"; then
     AC_MSG_RESULT([external])
     SYSTEM_JPEG=YES
+    JPEG_TURBO_CFLAGS=
     AC_CHECK_HEADER(jpeglib.h, [],
         [AC_MSG_ERROR(jpeg.h not found. install libjpeg)], [])
-    AC_CHECK_LIB(jpeg, jpeg_resync_to_restart, [ JPEG3RDLIB=-ljpeg ],
-	[AC_MSG_CHECKING(jpeg library not found or functional)], [])
+    PKG_CHECK_MODULES([libjpeg], [libjpeg], [
+        JPEG3RDLIB="$libjpeg_LIBS"
+        JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS $libjpeg_CFLAGS"
+    ], [
+        AC_MSG_ERROR([libjpeg-turbo / libjpeg development files not found.])
+    ])
+
+    dnl These are deliberately compile-only checks.  The system library may
+    dnl be IJG or libjpeg-turbo, and the latter's extensions are not part of
+    dnl the common JPEG ABI.  Keep each capability independent as well.
+    AC_LANG_PUSH([C])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          #ifndef LIBJPEG_TURBO_VERSION
+                          #error not libjpeg-turbo
+                          #endif]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_LIBJPEG_TURBO"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_RGB;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_RGB"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_BGR;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_BGR"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_RGBX;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_RGBX"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_BGRX;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_BGRX"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_XBGR;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_XBGR"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_XRGB;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_XRGB"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_CMYK;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_CMYK"])
+    AC_COMPILE_IFELSE([
+        AC_LANG_PROGRAM([[#include <jpeglib.h>
+                          static int n = JCS_EXT_RGB565;]], [[]])],
+        [JPEG_TURBO_CFLAGS="$JPEG_TURBO_CFLAGS -DHAVE_JCS_EXT_RGB565"])
+    AC_LANG_POP([C])
 else
     AC_MSG_RESULT([internal])
     SYSTEM_JPEG=NO
+    JPEG_TURBO_CFLAGS=
     BUILD_TYPE="$BUILD_TYPE JPEG"
 fi
 AC_SUBST(SYSTEM_JPEG)
+AC_SUBST(JPEG_TURBO_CFLAGS)
 
 dnl ===================================================================
 dnl Check for system expat

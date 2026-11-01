@@ -267,13 +267,26 @@ void ReadJPEG( void* pJPEGReader, void* pIStm, long* pLines )
 	pcinfo->raw_data_out = sal_False;
 	pcinfo->quantize_colors = sal_False;
 	if ( pcinfo->jpeg_color_space == JCS_YCbCr )
+	{
+		/* JCS_EXT_RGB has the same byte order as AOO's 24-bit RGB scanline.
+		   When available, libjpeg-turbo can write that representation directly
+		   instead of converting through the portable JCS_RGB path. */
+#ifdef HAVE_JCS_EXT_RGB
+		pcinfo->out_color_space = JCS_EXT_RGB;
+#else
 		pcinfo->out_color_space = JCS_RGB;
+	#endif
+	}
 	else if ( pcinfo->jpeg_color_space == JCS_YCCK )
 		pcinfo->out_color_space = JCS_CMYK;
 
 	OSL_ASSERT( pcinfo->out_color_space == JCS_CMYK ||
 				pcinfo->out_color_space == JCS_GRAYSCALE ||
-				pcinfo->out_color_space == JCS_RGB );
+				pcinfo->out_color_space == JCS_RGB
+#ifdef HAVE_JCS_EXT_RGB
+				|| pcinfo->out_color_space == JCS_EXT_RGB
+#endif
+				);
 
 	/* Change scale for preview import. */
 	if ( nPreviewWidth || nPreviewHeight )

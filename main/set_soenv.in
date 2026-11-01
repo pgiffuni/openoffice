@@ -2097,6 +2097,7 @@ ToFile( "SYSTEM_GENBRK",     "@SYSTEM_GENBRK@",    "e" );
 ToFile( "SYSTEM_GENCCODE",   "@SYSTEM_GENCCODE@",  "e" );
 ToFile( "SYSTEM_GENCMN",     "@SYSTEM_GENCMN@",    "e" );
 ToFile( "SYSTEM_JPEG",       "@SYSTEM_JPEG@",      "e" );
+ToFile( "JPEG_TURBO_CFLAGS", "@JPEG_TURBO_CFLAGS@", "e" );
 ToFile( "FREETYPE_CFLAGS",   "@FREETYPE_CFLAGS@",  "e" );
 ToFile( "FREETYPE_LIBS",     "@FREETYPE_LIBS@",    "e" );
 ToFile( "SYSTEM_POPPLER",    "@SYSTEM_POPPLER@",   "e" );
