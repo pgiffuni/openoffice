@@ -39,6 +39,7 @@ struct JPEGCreateBitmapParam
     unsigned long density_unit;
     unsigned long X_density;
     unsigned long Y_density;
+    unsigned long nExifOrientation;
     long     bGray;
 
     long     nAlignedWidth;  // these members will be filled by the

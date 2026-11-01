@@ -119,10 +119,15 @@ extern "C" void init_destination (j_compress_ptr cinfo)
 extern "C" boolean empty_output_buffer (j_compress_ptr cinfo)
 {
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+  size_t nWritten = 0;
 
-  if (dest->outfile->Write(dest->buffer, BUF_SIZE) !=
-      (size_t) BUF_SIZE)
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+  while (nWritten < (size_t) BUF_SIZE) {
+    size_t nBytes = dest->outfile->Write(dest->buffer + nWritten,
+                                         BUF_SIZE - nWritten);
+    if (nBytes == 0 || nBytes > (size_t) BUF_SIZE - nWritten)
+      ERREXIT(cinfo, JERR_FILE_WRITE);
+    nWritten += nBytes;
+  }
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = BUF_SIZE;
@@ -134,11 +139,15 @@ extern "C" void term_destination (j_compress_ptr cinfo)
 {
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
   size_t datacount = BUF_SIZE - dest->pub.free_in_buffer;
+  size_t nWritten = 0;
 
   /* Write any data remaining in the buffer */
-  if (datacount > 0) {
-    if (dest->outfile->Write(dest->buffer, datacount) != datacount)
+  while (nWritten < datacount) {
+    size_t nBytes = dest->outfile->Write(dest->buffer + nWritten,
+                                         datacount - nWritten);
+    if (nBytes == 0 || nBytes > datacount - nWritten)
       ERREXIT(cinfo, JERR_FILE_WRITE);
+    nWritten += nBytes;
   }
 }
 
@@ -174,6 +183,7 @@ typedef struct {
   SvStream * infile;            /* source stream */
   JOCTET * buffer;              /* start of buffer */
   boolean start_of_file;        /* have we gotten any data yet? */
+  boolean synthetic_eoi;        /* current buffer contains a synthetic EOI */
 } my_source_mgr;
 
 typedef my_source_mgr * my_src_ptr;
@@ -192,6 +202,7 @@ extern "C" void init_source (j_decompress_ptr cinfo)
    * This is correct behavior for reading a series of images from one source.
    */
   src->start_of_file = sal_True;
+  src->synthetic_eoi = sal_False;
 }
 
 long StreamRead( SvStream* pSvStm, void* pBuffer, long nBufferSize )
@@ -224,11 +235,12 @@ long StreamRead( SvStream* pSvStm, void* pBuffer, long nBufferSize )
 extern "C" boolean fill_input_buffer (j_decompress_ptr cinfo)
 {
   my_src_ptr src = (my_src_ptr) cinfo->src;
+  long nread;
   size_t nbytes;
 
-  nbytes = StreamRead(src->infile, src->buffer, BUF_SIZE);
+  nread = StreamRead(src->infile, src->buffer, BUF_SIZE);
 
-  if (nbytes <= 0) {
+  if (nread <= 0) {
     if (src->start_of_file)     /* Treat empty input file as fatal error */
       ERREXIT(cinfo, JERR_INPUT_EMPTY);
     WARNMS(cinfo, JWRN_JPEG_EOF);
@@ -236,6 +248,10 @@ extern "C" boolean fill_input_buffer (j_decompress_ptr cinfo)
     src->buffer[0] = (JOCTET) 0xFF;
     src->buffer[1] = (JOCTET) JPEG_EOI;
     nbytes = 2;
+    src->synthetic_eoi = sal_True;
+  } else {
+    nbytes = (size_t) nread;
+    src->synthetic_eoi = sal_False;
   }
 
   src->pub.next_input_byte = src->buffer;
@@ -254,12 +270,17 @@ extern "C" void skip_input_data (j_decompress_ptr cinfo, long num_bytes)
    * any trouble anyway --- large skips are infrequent.
    */
   if (num_bytes > 0) {
+    /* Preserve a synthetic EOI so libjpeg can report the premature end. */
+    if (src->synthetic_eoi)
+      return;
     while (num_bytes > (long) src->pub.bytes_in_buffer) {
       num_bytes -= (long) src->pub.bytes_in_buffer;
       (void) fill_input_buffer(cinfo);
       /* note we assume that fill_input_buffer will never return sal_False,
        * so suspension need not be handled.
        */
+      if (src->synthetic_eoi)
+        return;
     }
     src->pub.next_input_byte += (size_t) num_bytes;
     src->pub.bytes_in_buffer -= (size_t) num_bytes;
@@ -315,7 +336,8 @@ JPEGReader::JPEGReader( SvStream& rStm, void* /*pCallData*/, sal_Bool bSetLS ) :
 		pBuffer			( NULL ),
 		nLastPos		( rStm.Tell() ),
 		nLastLines		( 0 ),
-        bSetLogSize     ( bSetLS )
+		bSetLogSize     ( bSetLS ),
+		nExifOrientation( 1 )
 {
 	maUpperName = String::CreateFromAscii( "SVIJPEG", 7 );
 	nFormerPos = nLastPos;
@@ -342,6 +364,7 @@ void* JPEGReader::CreateBitmap( void* pParam )
     Size        aSize( ((JPEGCreateBitmapParam*)pParam)->nWidth,
                         ((JPEGCreateBitmapParam*)pParam)->nHeight );
     sal_Bool    bGray = ((JPEGCreateBitmapParam*)pParam)->bGray != 0;
+	nExifOrientation = ((JPEGCreateBitmapParam*)pParam)->nExifOrientation;
 
     void* pBmpBuf = NULL;
 
@@ -432,6 +455,56 @@ void* JPEGReader::CreateBitmap( void* pParam )
     }
 
     return pBmpBuf;
+}
+
+// ------------------------------------------------------------------------
+
+void JPEGReader::ApplyExifOrientation()
+{
+	Bitmap aOrientedBmp( aBmp );
+	sal_Bool bSuccess = sal_True;
+
+	switch( nExifOrientation )
+	{
+		case 2:
+			bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_HORZ );
+			break;
+		case 3:
+			bSuccess = aOrientedBmp.Rotate( 1800, Color( COL_WHITE ) );
+			break;
+		case 4:
+			bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_VERT );
+			break;
+		case 5: // transpose
+			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			if( bSuccess )
+				bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_VERT );
+			break;
+		case 6:
+			bSuccess = aOrientedBmp.Rotate( 2700, Color( COL_WHITE ) );
+			break;
+		case 7: // transverse
+			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			if( bSuccess )
+				bSuccess = aOrientedBmp.Mirror( BMP_MIRROR_HORZ );
+			break;
+		case 8:
+			bSuccess = aOrientedBmp.Rotate( 900, Color( COL_WHITE ) );
+			break;
+		default:
+			break;
+	}
+
+	if( bSuccess )
+	{
+		if( nExifOrientation >= 5 && nExifOrientation <= 8 )
+		{
+			const Size aPrefSize( aBmp.GetPrefSize() );
+			aOrientedBmp.SetPrefSize( Size( aPrefSize.Height(), aPrefSize.Width() ) );
+			aOrientedBmp.SetPrefMapMode( aBmp.GetPrefMapMode() );
+		}
+		aBmp = aOrientedBmp;
+	}
 }
 
 // ------------------------------------------------------------------------
@@ -609,7 +682,10 @@ ReadState JPEGReader::Read( Graphic& rGraphic )
 		if( rIStm.GetError() == ERRCODE_IO_PENDING )
 			rGraphic = CreateIntermediateGraphic( aBmp, nLines );
 		else
+		{
+			ApplyExifOrientation();
 			rGraphic = aBmp;
+		}
 
 		bRet = sal_True;
 	}
