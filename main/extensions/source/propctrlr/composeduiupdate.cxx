@@ -60,10 +60,7 @@ namespace pcr
 	//====================================================================
     namespace
     {
-        struct HandlerLess : public ::std::binary_function  <	Reference< XPropertyHandler >
-									                        ,   Reference< XPropertyHandler >
-									                        ,	bool
-                                                            >
+
         {
 	        bool operator()( const Reference< XPropertyHandler >& lhs, const Reference< XPropertyHandler >& rhs) const
 	        {
@@ -393,10 +390,7 @@ namespace pcr
     //====================================================================
 	//= HandlerMap
 	//====================================================================
-    typedef ::std::map  <   Reference< XPropertyHandler >
-                        ,   ::rtl::Reference< CachedInspectorUI >
-                        ,   HandlerLess
-                        >   ImplMapHandlerToUI;
+   ImplMapHandlerToUI;
     struct MapHandlerToUI
     {
         ImplMapHandlerToUI aHandlers;
@@ -441,7 +435,7 @@ namespace pcr
 	    //============================================================
         /** an STL-compatible structure which collects strings from a CachedInspectorUI instances
         */
-        struct StringBagCollector : public ::std::unary_function< ImplMapHandlerToUI::value_type, void >
+        struct StringBagCollector 
         {
         private:
             StringBag&                      m_rBag;
@@ -467,7 +461,7 @@ namespace pcr
 	    //============================================================
         /** an STL-compatible structure which cleans a certain string bag in a CachedInspectorUI instances
         */
-        struct StringBagClearer : public ::std::unary_function< ImplMapHandlerToUI::value_type, void >
+        struct StringBagClearer 
         {
         private:
             CachedInspectorUI::FGetStringBag  m_pGetter;
@@ -499,7 +493,7 @@ namespace pcr
         /** an STL-compatible struct which calls a certain member method (taking a string) at a
             given ->XObjectInspectorUI instance
         */
-        struct PropertyUIOperator : public ::std::unary_function< ::rtl::OUString, void >
+        struct PropertyUIOperator 
         {
         private:
             Reference< XObjectInspectorUI > m_xUpdater;
@@ -611,7 +605,7 @@ namespace pcr
         /** an STL-compatible structure which applies a ->IStringKeyBooleanUIUpdate::updateUIForKey
             operation with a fixed boolean value, for a given string value
         */
-        struct BooleanUIAspectUpdate : public ::std::unary_function< ::rtl::OUString, void >
+        struct BooleanUIAspectUpdate 
         {
         private:
             const IStringKeyBooleanUIUpdate&    m_rUpdater;
@@ -640,7 +634,7 @@ namespace pcr
 	    //============================================================
         /** an STL-compatible structure subtracting a given string from a fixed ->StringBag
         */
-        struct StringBagComplement : public ::std::unary_function< ::rtl::OUString, void >
+        struct StringBagComplement 
         {
         private:
             StringBag&  m_rMinuend;

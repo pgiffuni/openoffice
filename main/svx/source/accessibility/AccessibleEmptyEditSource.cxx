@@ -279,8 +279,8 @@ namespace accessibility
         if( mrObj.GetModel() )
             EndListening( *mrObj.GetModel() );
 
-        ::std::auto_ptr< SvxEditSource > pProxySource( new AccessibleProxyEditSource_Impl(mrObj, mrView, mrViewWindow) );
-        ::std::auto_ptr< SvxEditSource > tmp = mpEditSource;
+        ::std::unique_ptr< SvxEditSource > pProxySource( new AccessibleProxyEditSource_Impl(mrObj, mrView, mrViewWindow) );
+        ::std::unique_ptr< SvxEditSource > tmp = mpEditSource;
         mpEditSource = pProxySource;
         pProxySource = tmp;
 

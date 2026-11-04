@@ -25,7 +25,7 @@
 #define _SD_CUSTOMANIMATIONPRESET_HXX
 
 #ifndef BOOST_SHARED_PTR_HPP_INCLUDED
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #endif
 #include <com/sun/star/lang/XMultiServiceFactory.hpp>
 #include <com/sun/star/animations/AnimationNodeType.hpp>
@@ -35,12 +35,12 @@
 #endif
 #include <CustomAnimationEffect.hxx>
 
-#include <hash_map>
+#include <unordered_map>
 
 namespace sd {
 
-typedef std::hash_map< rtl::OUString, CustomAnimationEffectPtr, comphelper::UStringHash, comphelper::UStringEqual > EffectsSubTypeMap;
-typedef std::hash_map< rtl::OUString, rtl::OUString, comphelper::UStringHash, comphelper::UStringEqual > UStringMap;
+typedef std::unordered_map< rtl::OUString, CustomAnimationEffectPtr, comphelper::UStringHash, comphelper::UStringEqual > EffectsSubTypeMap;
+typedef std::unordered_map< rtl::OUString, rtl::OUString, comphelper::UStringHash, comphelper::UStringEqual > UStringMap;
 typedef std::vector< rtl::OUString > UStringList;
 
 class CustomAnimationPreset
@@ -78,8 +78,8 @@ private:
 	EffectsSubTypeMap maSubTypes;
 };
 
-typedef boost::shared_ptr< CustomAnimationPreset > CustomAnimationPresetPtr;
-typedef std::hash_map<rtl::OUString, CustomAnimationPresetPtr, comphelper::UStringHash, comphelper::UStringEqual> EffectDescriptorMap;
+typedef std::shared_ptr< CustomAnimationPreset > CustomAnimationPresetPtr;
+typedef std::unordered_map<rtl::OUString, CustomAnimationPresetPtr, comphelper::UStringHash, comphelper::UStringEqual> EffectDescriptorMap;
 typedef std::vector< CustomAnimationPresetPtr > EffectDescriptorList;
 
 struct PresetCategory
@@ -90,7 +90,7 @@ struct PresetCategory
 	PresetCategory( const rtl::OUString& rLabel, const EffectDescriptorList& rEffects )
 		: maLabel( rLabel ), maEffects( rEffects ) {}
 };
-typedef boost::shared_ptr< PresetCategory > PresetCategoryPtr;
+typedef std::shared_ptr< PresetCategory > PresetCategoryPtr;
 typedef std::vector< PresetCategoryPtr > PresetCategoryList;
 
 class CustomAnimationPresets
@@ -143,7 +143,7 @@ private:
 	static CustomAnimationPresets*	mpCustomAnimationPresets;
 };
 
-typedef boost::shared_ptr< CustomAnimationPresets > CustomAnimationPresetsPtr;
+typedef std::shared_ptr< CustomAnimationPresets > CustomAnimationPresetsPtr;
 
 }
 

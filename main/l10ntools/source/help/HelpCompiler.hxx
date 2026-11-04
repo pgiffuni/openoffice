@@ -25,7 +25,7 @@
 #define HELPCOMPILER_HXX
 
 #include <string>
-#include <hash_map>
+#include <unordered_map>
 #include <vector>
 #include <list>
 #include <fstream>
@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <ctype.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/debugXML.h>
@@ -213,11 +213,11 @@ struct SuperFastHash
 
 #define pref_hash joaat_hash
 
-typedef std::hash_map<std::string, std::string, pref_hash> Stringtable;
+typedef std::unordered_map<std::string, std::string, pref_hash> Stringtable;
 typedef std::list<std::string> LinkedList;
 typedef std::vector<std::string> HashSet;
 
-typedef std::hash_map<std::string, LinkedList, pref_hash> Hashtable;
+typedef std::unordered_map<std::string, LinkedList, pref_hash> Hashtable;
 
 class StreamTable
 {

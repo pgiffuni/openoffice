@@ -25,8 +25,8 @@
 #define SC_DPGROUP_HXX
 
 #include <vector>
-#include <hash_set>
-#include <boost/shared_ptr.hpp>
+#include <unordered_set>
+#include <memory>
 
 #include "dptabdat.hxx"
 #include "scdllapi.h"
@@ -189,9 +189,9 @@ public:
 
 class ScDPGroupTableData : public ScDPTableData
 {
-    typedef ::std::hash_set< ::rtl::OUString, ::rtl::OUStringHash, ::std::equal_to< ::rtl::OUString > > StringHashSet;
+    typedef ::std::unordered_set< ::rtl::OUString, ::rtl::OUStringHash, ::std::equal_to< ::rtl::OUString > > StringHashSet;
 
-    ::boost::shared_ptr<ScDPTableData> pSourceData;
+    ::std::shared_ptr<ScDPTableData> pSourceData;
     long                    nSourceCount;
     ScDPGroupDimensionVec   aGroups;
     ScDPNumGroupDimension*  pNumGroups;     // array[nSourceCount]
@@ -212,7 +212,7 @@ class ScDPGroupTableData : public ScDPTableData
 
 public:
                 // takes ownership of pSource
-                ScDPGroupTableData( const ::boost::shared_ptr<ScDPTableData>& pSource, ScDocument* pDocument );
+                ScDPGroupTableData( const ::std::shared_ptr<ScDPTableData>& pSource, ScDocument* pDocument );
     virtual     ~ScDPGroupTableData();
 
     void        AddGroupDimension( const ScDPGroupDimension& rGroup );
@@ -240,9 +240,9 @@ public:
     virtual bool                    IsRepeatIfEmpty();
 
     virtual void                    CreateCacheTable();
-    virtual void                    FilterCacheTable(const ::std::vector<ScDPCacheTable::Criterion>& rCriteria, const ::std::hash_set<sal_Int32>& rDataDims);
+    virtual void                    FilterCacheTable(const ::std::vector<ScDPCacheTable::Criterion>& rCriteria, const ::std::unordered_set<sal_Int32>& rDataDims);
     virtual void                    GetDrillDownData(const ::std::vector<ScDPCacheTable::Criterion>& rCriteria,
-                                                     const ::std::hash_set<sal_Int32>& rCatDims,
+                                                     const ::std::unordered_set<sal_Int32>& rCatDims,
                                                      ::com::sun::star::uno::Sequence< ::com::sun::star::uno::Sequence< ::com::sun::star::uno::Any > >& rData);
     virtual void                    CalcResults(CalcInfo& rInfo, bool bAutoShow);
     virtual const ScDPCacheTable&   GetCacheTable() const;

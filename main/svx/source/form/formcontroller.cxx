@@ -519,7 +519,7 @@ IMPL_LINK( FormController, OnActivateTabOrder, void*, /*EMPTYTAG*/ )
 }
 
 //------------------------------------------------------------------------------
-struct UpdateAllListeners : public ::std::unary_function< Reference< XDispatch >, bool >
+struct UpdateAllListeners , bool >
 {
     bool operator()( const Reference< XDispatch >& _rxDispatcher ) const
     {
@@ -758,7 +758,7 @@ Sequence< ::rtl::OUString> FormController::getSupportedServiceNames_Static(void)
 // -----------------------------------------------------------------------------
 namespace
 {
-    struct ResetComponentText : public ::std::unary_function< Reference< XTextComponent >, void >
+    struct ResetComponentText , void >
     {
         void operator()( const Reference< XTextComponent >& _rxText )
         {
@@ -766,7 +766,7 @@ namespace
         }
     };
 
-    struct RemoveComponentTextListener : public ::std::unary_function< Reference< XTextComponent >, void >
+    struct RemoveComponentTextListener , void >
     {
         RemoveComponentTextListener( const Reference< XTextListener >& _rxListener )
             :m_xListener( _rxListener )
@@ -2235,7 +2235,7 @@ void FormController::setControlLock(const Reference< XControl > & xControl)
     // b.) wenn das zugehoerige Feld gespeert ist
     Reference< XBoundControl >  xBound(xControl, UNO_QUERY);
     if (xBound.is() && (( (bLocked && bLocked != xBound->getLock()) ||
-                         !bLocked)))    // beim entlocken immer einzelne Felder ueberprüfen
+                         !bLocked)))    // beim entlocken immer einzelne Felder ueberprï¿½fen
     {
         // gibt es eine Datenquelle
         Reference< XPropertySet >  xSet(xControl->getModel(), UNO_QUERY);
@@ -2665,10 +2665,7 @@ void FormController::updateAllDispatchers() const
     ::std::for_each(
         m_aFeatureDispatchers.begin(),
         m_aFeatureDispatchers.end(),
-        ::std::compose1(
-            UpdateAllListeners(),
-            ::std::select2nd< DispatcherContainer::value_type >()
-        )
+        [](auto& _x) { UpdateAllListeners()(_x.second); }
     );
 }
 
@@ -2948,7 +2945,7 @@ void SAL_CALL FormController::elementRemoved(const ContainerEvent& evt)
     if (xModel.is() && m_xModelAsIndex == xModel->getParent())
     {
         removeControl(xControl);
-        // TabOrder nicht neu berechnen, da das intern schon funktionieren muß!
+        // TabOrder nicht neu berechnen, da das intern schon funktionieren muï¿½!
     }
     // are we in filtermode and a XModeSelector has inserted an element
     else if (m_bFiltering && Reference< XModeSelector > (evt.Source, UNO_QUERY).is())

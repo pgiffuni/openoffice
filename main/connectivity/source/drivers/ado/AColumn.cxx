@@ -223,12 +223,8 @@ void OAdoColumn::fillPropertyValues()
 			::comphelper::TStringMixEqualFunctor aCase(sal_False);
 			OTypeInfoMap::const_iterator aFind = ::std::find_if(pTypeInfoMap->begin(),
 															pTypeInfoMap->end(),
-															::std::compose1(
-															::std::bind2nd(aCase, ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("VarBinary"))),
-																::std::compose1(
-																	::std::mem_fun(&OExtendedTypeInfo::getDBName),
-																	::std::select2nd<OTypeInfoMap::value_type>())
-																)
+															[](auto& _x) { return aCase(_x.second->getDBName(), ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("VarBinary"))); }
+															)
 
 													);
 

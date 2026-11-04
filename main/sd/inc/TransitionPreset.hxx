@@ -25,7 +25,7 @@
 #define _SD_TRANSITIONPRESET_HXX
 
 #ifndef BOOST_SHARED_PTR_HPP_INCLUDED
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #endif
 #include <com/sun/star/lang/XMultiServiceFactory.hpp>
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 
 namespace com { namespace sun { namespace star {
 	namespace animations { class XAnimationNode; }
@@ -47,9 +47,9 @@ class String;
 namespace sd {
 
 class TransitionPreset;
-typedef boost::shared_ptr< TransitionPreset > TransitionPresetPtr;
+typedef std::shared_ptr< TransitionPreset > TransitionPresetPtr;
 typedef std::list< TransitionPresetPtr > TransitionPresetList;
-typedef std::hash_map< rtl::OUString, rtl::OUString, comphelper::UStringHash, comphelper::UStringEqual > UStringMap;
+typedef std::unordered_map< rtl::OUString, rtl::OUString, comphelper::UStringHash, comphelper::UStringEqual > UStringMap;
 
 class TransitionPreset
 {

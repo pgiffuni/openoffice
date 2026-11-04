@@ -24,8 +24,8 @@
 #ifndef INCLUDED_SLIDESHOW_VIEWEVENTHANDLER_HXX
 #define INCLUDED_SLIDESHOW_VIEWEVENTHANDLER_HXX
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
+#include <memory>
 
 #include "unoview.hxx"
 
@@ -86,8 +86,8 @@ namespace slideshow
             virtual void viewsChanged() = 0;
         };
 
-        typedef ::boost::shared_ptr< ViewEventHandler > ViewEventHandlerSharedPtr;
-        typedef ::boost::weak_ptr< ViewEventHandler >   ViewEventHandlerWeakPtr;
+        typedef ::std::shared_ptr< ViewEventHandler > ViewEventHandlerSharedPtr;
+        typedef ::std::weak_ptr< ViewEventHandler >   ViewEventHandlerWeakPtr;
 
     }
 }

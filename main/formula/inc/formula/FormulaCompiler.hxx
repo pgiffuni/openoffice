@@ -29,8 +29,8 @@
 #include <tools/debug.hxx>
 #include <rtl/ustrbuf.hxx>
 
-#include <boost/shared_ptr.hpp>
-#include <hash_map>
+#include <memory>
+#include <unordered_map>
 
 #include <com/sun/star/uno/Sequence.hxx>
 
@@ -72,8 +72,8 @@ struct FORMULA_DLLPUBLIC StringHashCode
     }
 };
 
-typedef ::std::hash_map< String, OpCode, StringHashCode, ::std::equal_to< String > > OpCodeHashMap;
-typedef ::std::hash_map< String, String, StringHashCode, ::std::equal_to< String > > ExternalHashMap;
+typedef ::std::unordered_map< String, OpCode, StringHashCode, ::std::equal_to< String > > OpCodeHashMap;
+typedef ::std::unordered_map< String, String, StringHashCode, ::std::equal_to< String > > ExternalHashMap;
 
 class FORMULA_DLLPUBLIC FormulaCompiler
 {
@@ -186,8 +186,8 @@ public:
     };
 
 public:
-    typedef ::boost::shared_ptr< const OpCodeMap >  OpCodeMapPtr;
-    typedef ::boost::shared_ptr< OpCodeMap >        NonConstOpCodeMapPtr;
+    typedef ::std::shared_ptr< const OpCodeMap >  OpCodeMapPtr;
+    typedef ::std::shared_ptr< OpCodeMap >        NonConstOpCodeMapPtr;
 
     /** Get OpCodeMap for formula language.
         @param nLanguage

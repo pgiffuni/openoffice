@@ -50,14 +50,14 @@
 #include "unoview.hxx"
 #include "unoviewcontainer.hxx"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
+#include <memory>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/bind.hpp>
 
 #include <vector>
-#include <hash_map>
+#include <unordered_map>
 #include <algorithm>
 
 using namespace ::com::sun::star;
@@ -78,7 +78,7 @@ namespace internal {
 template <typename HandlerT>
 class PrioritizedHandlerEntry
 {
-    typedef boost::shared_ptr<HandlerT> HandlerSharedPtrT;
+    typedef std::shared_ptr<HandlerT> HandlerSharedPtrT;
     HandlerSharedPtrT mpHandler;
     double            mnPrio;
 
@@ -316,7 +316,7 @@ struct EventMultiplexerImpl
         setAutomaticMode(true) call is then able to
         regenerate the event.
     */
-    ::boost::weak_ptr< Event >    mpTickEvent;
+    ::std::weak_ptr< Event >    mpTickEvent;
     bool                          mbIsAutoMode;
 };
 

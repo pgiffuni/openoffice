@@ -34,6 +34,7 @@
 
 #include <boost/bind.hpp>
 #include <algorithm>
+#include <memory>
 
 #include "layermanager.hxx"
 
@@ -620,7 +621,7 @@ namespace slideshow
                 {
                 }
 
-                virtual bool isOnView(boost::shared_ptr<View> const& /*rView*/) const
+                virtual bool isOnView(std::shared_ptr<View> const& /*rView*/) const
                 {
                     return true; // visible on all views
                 }

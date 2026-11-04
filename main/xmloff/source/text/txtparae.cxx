@@ -34,7 +34,7 @@
 #include <sal/types.h>
 #include <vector>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <iterator>
 #include <com/sun/star/lang/XServiceInfo.hpp>
 #include <com/sun/star/container/XEnumerationAccess.hpp>
@@ -154,7 +154,6 @@ namespace
     };
 
     struct FrameRefHash
-        : public unary_function<Reference<XTextFrame>, size_t>
     {
         size_t operator()(const Reference<XTextFrame> xFrame) const
             { return sal::static_int_cast<size_t>(reinterpret_cast<sal_uIntPtr>(xFrame.get())); }
@@ -209,7 +208,7 @@ namespace
             };
 
         private:
-            typedef hash_map<
+            typedef std::unordered_map<
                 Reference<XTextFrame>,
                 TextContentSet,
                 FrameRefHash> framebound_map_t;

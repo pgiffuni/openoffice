@@ -257,7 +257,7 @@ void VCoordinateSystem::impl_adjustDimensionAndIndex( sal_Int32& rDimensionIndex
 
 void VCoordinateSystem::setExplicitCategoriesProvider( ExplicitCategoriesProvider* pExplicitCategoriesProvider /*takes ownership*/ )
 {
-    m_apExplicitCategoriesProvider = ::std::auto_ptr< ExplicitCategoriesProvider >(pExplicitCategoriesProvider);
+    m_apExplicitCategoriesProvider = ::std::unique_ptr< ExplicitCategoriesProvider >(pExplicitCategoriesProvider);
 }
 
 ExplicitCategoriesProvider* VCoordinateSystem::getExplicitCategoriesProvider()

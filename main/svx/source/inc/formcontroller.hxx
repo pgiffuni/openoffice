@@ -88,7 +88,7 @@
 #include <comphelper/implbase_var.hxx>
 #endif
 
-struct FmXTextComponentLess : public ::std::binary_function< ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTextComponent >, ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTextComponent> , sal_Bool>
+struct FmXTextComponentLess , ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTextComponent> , sal_Bool>
 {
     sal_Bool operator() (const ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTextComponent >& x, const ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTextComponent >& y) const
     {
@@ -110,28 +110,7 @@ namespace svxform
     struct FmFieldInfo;
 
     typedef ::comphelper::WeakComponentImplHelper22 <   ::com::sun::star::form::runtime::XFormController
-                                                    ,   ::com::sun::star::form::runtime::XFilterController
-                                                    ,   ::com::sun::star::awt::XFocusListener
-                                                    ,   ::com::sun::star::form::XLoadListener
-                                                    ,   ::com::sun::star::beans::XPropertyChangeListener
-                                                    ,   ::com::sun::star::awt::XTextListener
-                                                    ,   ::com::sun::star::awt::XItemListener
-                                                    ,   ::com::sun::star::container::XContainerListener
-                                                    ,   ::com::sun::star::util::XModifyListener
-                                                    ,   ::com::sun::star::form::XConfirmDeleteListener
-                                                    ,   ::com::sun::star::sdb::XSQLErrorListener
-                                                    ,   ::com::sun::star::sdbc::XRowSetListener
-                                                    ,   ::com::sun::star::sdb::XRowSetApproveListener
-                                                    ,   ::com::sun::star::form::XDatabaseParameterListener
-                                                    ,   ::com::sun::star::lang::XServiceInfo
-                                                    ,   ::com::sun::star::form::XResetListener
-                                                    ,   ::com::sun::star::frame::XDispatch
-                                                    ,   ::com::sun::star::awt::XMouseListener
-                                                    ,   ::com::sun::star::form::validation::XFormComponentValidityListener
-                                                    ,   ::com::sun::star::task::XInteractionHandler
-                                                    ,   ::com::sun::star::form::XGridControlListener
-                                                    ,   ::com::sun::star::form::runtime::XFeatureInvalidation
-                                                    >   FormController_BASE;
+   FormController_BASE;
 
     //==================================================================
     // FormController
@@ -145,8 +124,7 @@ namespace svxform
                                         ,public ::svxform::OSQLParserClient
     {
         typedef ::std::map  <   sal_Int16,
-                                ::com::sun::star::uno::Reference< ::com::sun::star::frame::XDispatch >
-                            >   DispatcherContainer;
+   DispatcherContainer;
 
         ::com::sun::star::uno::Reference< ::com::sun::star::uno::XAggregation>				m_xAggregate;
         ::com::sun::star::uno::Reference< ::com::sun::star::awt::XTabController>			m_xTabController;
@@ -192,7 +170,7 @@ namespace svxform
         ::svxform::DelayedEvent     m_aActivationEvent;
         ::svxform::DelayedEvent     m_aDeactivationEvent;
 
-        ::std::auto_ptr< ColumnInfoCache >
+        ::std::unique_ptr< ColumnInfoCache >
                                     m_pColumnInfoCache;
 
         sal_Int32					m_nCurrentFilterPosition;	// current level for filtering (or-criteria)

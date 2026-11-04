@@ -331,7 +331,7 @@ SvxEditSource* SvxEditSourceAdapter::Clone() const
 {
     if( mbEditSourceValid && mpAdaptee.get() )
     {
-        ::std::auto_ptr< SvxEditSource > pClonedAdaptee( mpAdaptee->Clone() );
+        ::std::unique_ptr< SvxEditSource > pClonedAdaptee( mpAdaptee->Clone() );
 
         if( pClonedAdaptee.get() )
         {
@@ -419,7 +419,7 @@ SfxBroadcaster& SvxEditSourceAdapter::GetBroadcaster() const
     return maDummyBroadcaster;
 }
 
-void SvxEditSourceAdapter::SetEditSource( ::std::auto_ptr< SvxEditSource > pAdaptee )
+void SvxEditSourceAdapter::SetEditSource( ::std::unique_ptr< SvxEditSource > pAdaptee )
 {
     if( pAdaptee.get() )
     {

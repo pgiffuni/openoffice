@@ -35,7 +35,7 @@
 
 #include <algorithm>
 #include <vector>
-#include <hash_map>
+#include <unordered_map>
 
 namespace css = ::com::sun::star;
 
@@ -1765,7 +1765,7 @@ void Document::init()
     if (m_xParagraphs.get() == 0)
     {
         ::sal_uLong nCount = m_rEngine.GetParagraphCount();
-        ::std::auto_ptr< Paragraphs > p(new Paragraphs);
+        ::std::unique_ptr< Paragraphs > p(new Paragraphs);
         p->reserve(static_cast< Paragraphs::size_type >(nCount));
             // numeric overflow is harmless here
         for (::sal_uLong i = 0; i < nCount; ++i)

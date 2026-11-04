@@ -84,7 +84,7 @@ using com::sun::star::frame::XFrame;
 using xforms::Submission;
 using xforms::Model;
 using xforms::MIP;
-using std::auto_ptr;
+using std::unique_ptr;
 
 using namespace com::sun::star::uno;
 using namespace com::sun::star::lang;

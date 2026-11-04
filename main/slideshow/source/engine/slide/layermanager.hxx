@@ -24,7 +24,7 @@
 #ifndef INCLUDED_SLIDESHOW_LAYERMANAGER_HXX
 #define INCLUDED_SLIDESHOW_LAYERMANAGER_HXX
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/noncopyable.hpp>
 
 #include <cppcanvas/spritecanvas.hxx>
@@ -37,7 +37,7 @@
 
 #include <vector>
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <algorithm>
 #include <functional>
 
@@ -240,7 +240,7 @@ namespace slideshow
 
                 Provides quicker lookup than ShapeSet for simple mappings
              */
-            typedef ::std::hash_map<
+            typedef ::std::unordered_map<
                 ::com::sun::star::uno::Reference<
                     ::com::sun::star::drawing::XShape >,
                 ShapeSharedPtr,
@@ -374,7 +374,7 @@ namespace slideshow
             bool                     mbDisableAnimationZOrder;
         };
 
-        typedef ::boost::shared_ptr< LayerManager > LayerManagerSharedPtr;
+        typedef ::std::shared_ptr< LayerManager > LayerManagerSharedPtr;
     }
 }
 

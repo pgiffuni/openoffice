@@ -35,7 +35,7 @@
 #include <rtl/strbuf.hxx>
 #include <osl/diagnose.h>
 
-#include <hash_map>
+#include <unordered_map>
 #include <functional>
 #include <algorithm>
 
@@ -61,7 +61,7 @@ namespace comphelper
     //====================================================================
 	//= NamedValueCollection_Impl
 	//====================================================================
-    typedef ::std::hash_map< ::rtl::OUString, Any, ::rtl::OUStringHash >    NamedValueRepository;
+    typedef ::std::unordered_map< ::rtl::OUString, Any, ::rtl::OUStringHash >    NamedValueRepository;
 
     struct NamedValueCollection_Impl
     {
@@ -326,7 +326,7 @@ namespace comphelper
     //--------------------------------------------------------------------
     namespace
     {
-        struct Value2PropertyValue : public ::std::unary_function< NamedValueRepository::value_type, PropertyValue >
+        struct Value2PropertyValue 
         {
             PropertyValue operator()( const NamedValueRepository::value_type& _rValue )
             {
@@ -335,7 +335,7 @@ namespace comphelper
             }
         };
 
-        struct Value2NamedValue : public ::std::unary_function< NamedValueRepository::value_type, NamedValue >
+        struct Value2NamedValue 
         {
             NamedValue operator()( const NamedValueRepository::value_type& _rValue )
             {

@@ -78,7 +78,7 @@ class SwList;
 #include <com/sun/star/script/vba/XVBAEventProcessor.hpp>
 #endif
 
-#include <hash_map>
+#include <unordered_map>
 #include <stringhash.hxx>
 
 #include <svtools/embedhlp.hxx>
@@ -88,7 +88,7 @@ class SwList;
 #include <memory>
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <flypos.hxx>
 
 class SvxForbiddenCharactersTable;
@@ -326,7 +326,7 @@ class SW_DLLPUBLIC SwDoc :
 	SwDefTOXBase_Impl * pDefTOXBases;	// defaults of SwTOXBase's
 
 	ViewShell		*pCurrentView;	// SwDoc should get a new member pCurrentView//swmod 071225
-	boost::shared_ptr<SwRootFrm> pLayoutPtr;
+	std::shared_ptr<SwRootFrm> pLayoutPtr;
 	SwDrawModel*     pDrawModel;		// StarView Drawing
 
 	SwDocUpdtFld 	*pUpdtFlds;			// Struktur zum Field-Update
@@ -363,10 +363,10 @@ class SW_DLLPUBLIC SwDoc :
     mutable SwNumRuleTbl    *pNumRuleTbl;           // Liste aller benannten NumRules
 
     // Hash map to find numrules by name
-    mutable std::hash_map<String, SwNumRule *, StringHash> maNumRuleMap;
+    mutable std::unordered_map<String, SwNumRule *, StringHash> maNumRuleMap;
 
     // --> OD 2008-03-12 #refactorlists#
-    typedef std::hash_map< String, SwList*, StringHash > tHashMapForLists;
+    typedef std::unordered_map< String, SwList*, StringHash > tHashMapForLists;
     // container to hold the lists of the text document
     tHashMapForLists maLists;
     // relation between list style and its default list
@@ -414,7 +414,7 @@ private:
     tImplSortedNodeNumList* mpListItemsList;
     // <--
 
-    ::std::auto_ptr< ::sfx2::IXmlIdRegistry > m_pXmlIdRegistry;
+    ::std::unique_ptr< ::sfx2::IXmlIdRegistry > m_pXmlIdRegistry;
 
 	// -------------------------------------------------------------------
 	// sonstige
@@ -1839,7 +1839,7 @@ public:
 	const SwDocShell* GetDocShell() const	{ return pDocShell; }
 	void SetDocShell( SwDocShell* pDSh );
 
-	void ShareLayout( boost::shared_ptr<SwRootFrm>& rPtr);
+	void ShareLayout( std::shared_ptr<SwRootFrm>& rPtr);
 
 	// in case during copying of embedded object a new shell is created,
     // it should be set here and cleaned later

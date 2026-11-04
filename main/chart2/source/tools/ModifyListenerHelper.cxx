@@ -68,9 +68,7 @@ void lcl_fireModifyEvent(
     }
 }
 
-struct lcl_weakReferenceToSame : public ::std::unary_function<
-        ::std::pair<
-            ::com::sun::star::uno::WeakReference< ::com::sun::star::util::XModifyListener >,
+struct lcl_weakReferenceToSame ,
             ::com::sun::star::uno::Reference< ::com::sun::star::util::XModifyListener > >,
         bool >
 {

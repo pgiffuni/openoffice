@@ -30,6 +30,7 @@
 #endif
 
 #include <sfx2/passwd.hxx>
+#include <memory>
 #include "sfxtypes.hxx"
 #include "sfx2/sfxresid.hxx"
 
@@ -125,7 +126,7 @@ SfxPasswordDialog::SfxPasswordDialog( Window* pParent, const String* pGroupText 
 	FreeResource();
 
 	// setup layout
-    boost::shared_ptr<vcl::RowOrColumn> xLayout =
+    std::shared_ptr<vcl::RowOrColumn> xLayout =
         boost::dynamic_pointer_cast<vcl::RowOrColumn>( getLayout() );
     xLayout->setOuterBorder( 0 );
 
@@ -133,7 +134,7 @@ SfxPasswordDialog::SfxPasswordDialog( Window* pParent, const String* pGroupText 
     Size aEditSize( maUserED.GetSizePixel() );
 
     // add labelcolumn for the labeled edit fields
-    boost::shared_ptr<vcl::LabelColumn> xEdits( new vcl::LabelColumn( xLayout.get() ) );
+    std::shared_ptr<vcl::LabelColumn> xEdits( new vcl::LabelColumn( xLayout.get() ) );
     size_t nChildIndex = xLayout->addChild( xEdits );
     xLayout->setBorders( nChildIndex, -2, -2, -2, 0 );
 
@@ -166,7 +167,7 @@ SfxPasswordDialog::SfxPasswordDialog( Window* pParent, const String* pGroupText 
 
     // add button column
     Size aBtnSize( maCancelBtn.GetSizePixel() );
-    boost::shared_ptr<vcl::RowOrColumn> xButtons( new vcl::RowOrColumn( xLayout.get(), false ) );
+    std::shared_ptr<vcl::RowOrColumn> xButtons( new vcl::RowOrColumn( xLayout.get(), false ) );
     nChildIndex = xLayout->addChild( xButtons );
     xLayout->setBorders( nChildIndex, -2, 0, -2, -2 );
 
@@ -242,7 +243,7 @@ short SfxPasswordDialog::Execute()
         maConfirm2ED.Show();
     }
 
-    boost::shared_ptr<vcl::RowOrColumn> xLayout =
+    std::shared_ptr<vcl::RowOrColumn> xLayout =
         boost::dynamic_pointer_cast<vcl::RowOrColumn>( getLayout() );
 	SetSizePixel( xLayout->getOptimalSize( WINDOWSIZE_PREFERRED ) );
 

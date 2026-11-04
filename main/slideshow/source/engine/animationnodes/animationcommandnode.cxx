@@ -37,6 +37,7 @@
 #include "nodetools.hxx"
 
 #include <boost/bind.hpp>
+#include <memory>
 
 using namespace com::sun::star;
 
@@ -46,7 +47,7 @@ namespace internal {
 namespace EffectCommands = com::sun::star::presentation::EffectCommands;
 
 AnimationCommandNode::AnimationCommandNode( uno::Reference<animations::XAnimationNode> const& xNode,
-                                             ::boost::shared_ptr<BaseContainerNode> const& pParent,
+                                             ::std::shared_ptr<BaseContainerNode> const& pParent,
                                              NodeContext const& rContext ) :
     BaseNode( xNode, pParent, rContext ),
     mpShape(),

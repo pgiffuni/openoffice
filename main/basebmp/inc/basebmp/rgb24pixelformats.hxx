@@ -36,8 +36,7 @@
 namespace basebmp
 {
 
-template< typename PixelType, typename ColorType > struct RGBValueGetter :
-        public std::unary_function<PixelType, ColorType>
+template< typename PixelType, typename ColorType > struct RGBValueGetter 
 {
     ColorType operator()( PixelType const& c ) const
     {
@@ -45,8 +44,7 @@ template< typename PixelType, typename ColorType > struct RGBValueGetter :
     }
 };
 
-template< typename PixelType, typename ColorType > struct RGBValueSetter :
-    public std::unary_function<ColorType, PixelType>
+template< typename PixelType, typename ColorType > struct RGBValueSetter 
 {
     PixelType operator()( ColorType const& c ) const
     {

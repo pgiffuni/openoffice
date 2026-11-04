@@ -180,9 +180,7 @@ namespace connectivity
 			TStorages& rMap = lcl_getStorageMap();
 			// check if the storage is already in our map
 			TStorages::iterator aFind = ::std::find_if(rMap.begin(),rMap.end(),
-										::std::compose1(
-											::std::bind2nd(::std::equal_to<Reference<XStorage> >(),_xStorage)
-											,::std::compose1(::std::select1st<TStorageURLPair>(),::std::compose1(::std::select1st<TStorages::mapped_type>(),::std::select2nd<TStorages::value_type>())))
+										[_xStorage](auto& _x) { return _x.second.first.first == _xStorage; });
 					);
 			if ( aFind == rMap.end() )
 			{
@@ -211,9 +209,7 @@ namespace connectivity
 			TStorages& rMap = lcl_getStorageMap();
 			// check if the storage is already in our map
 			TStorages::iterator aFind = ::std::find_if(rMap.begin(),rMap.end(),
-										::std::compose1(
-											::std::bind2nd(::std::equal_to<Reference<XStorage> >(),_xStorage)
-											,::std::compose1(::std::select1st<TStorageURLPair>(),::std::compose1(::std::select1st<TStorages::mapped_type>(),::std::select2nd<TStorages::value_type>())))
+										[_xStorage](auto& _x) { return _x.second.first.first == _xStorage; });
 					);
 			if ( aFind != rMap.end() )
                 sKey = aFind->first;

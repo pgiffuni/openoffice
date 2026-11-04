@@ -62,7 +62,7 @@ using ::rtl::OUStringBuffer;
 namespace
 {
 
-class lcl_MatchesRole : public ::std::unary_function< Reference< chart2::data::XLabeledDataSequence >, bool >
+class lcl_MatchesRole , bool >
 {
 public:
     explicit lcl_MatchesRole( const OUString & aRole, bool bMatchPrefix ) :

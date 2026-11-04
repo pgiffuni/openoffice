@@ -1564,7 +1564,7 @@ sal_Bool OResultSet::OpenImpl()
 						}
 
 						m_pFileSet->get().erase(::std::remove_if(m_pFileSet->get().begin(),m_pFileSet->get().end(),
-															::std::bind2nd(::std::equal_to<sal_Int32>(),0))
+															[0](auto& _x) { return ::std::equal_to<sal_Int32>()(_x, 0); })
 										  ,m_pFileSet->get().end());
 
 						if (bWasSorted)
