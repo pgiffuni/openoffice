@@ -33,6 +33,7 @@
 #include <tools/diagnose_ex.h>
 
 #include <memory>
+#include <boost/bind.hpp>
 #include <com/sun/star/rendering/FontRequest.hpp>
 #include <com/sun/star/rendering/PanoseProportion.hpp>
 #include <com/sun/star/rendering/XCanvasFont.hpp>
@@ -117,7 +118,9 @@ namespace dxcanvas
 
         // issue an ReleaseHDC() when leaving the scope
         const ::comphelper::ScopeGuard aGuard(
-            [&]() { rGraphics->ReleaseHDC( hdc ); });
+            boost::bind( &Gdiplus::Graphics::ReleaseHDC,
+                         rGraphics.get(),
+                         hdc ));
 
         SystemGraphicsData aSystemGraphicsData;
         aSystemGraphicsData.nSize = sizeof(SystemGraphicsData);
