@@ -199,10 +199,14 @@ RDFaExportHelper::AddRDFa(
 
         ::rtl::OUStringBuffer property;
         ::comphelper::intersperse(
-            ::comphelper::stl_begin(rStatements),
-            ::comphelper::stl_end(rStatements),
+            ::boost::make_transform_iterator(
+                ::comphelper::stl_begin(rStatements),
+                [&](const auto& stmt) { return makeCURIE( &m_rExport, stmt.Predicate ); }),
+            // argh, this must be the same type :(
+            ::boost::make_transform_iterator(
+                ::comphelper::stl_end(rStatements),
+                [&](const auto& stmt) { return makeCURIE( &m_rExport, stmt.Predicate ); }),
             ::comphelper::OUStringBufferAppender(property),
-            ::rtl::OUString(" "));
             ::rtl::OUString::createFromAscii(" "));
 
         m_rExport.AddAttribute(XML_NAMESPACE_XHTML, token::XML_PROPERTY,
