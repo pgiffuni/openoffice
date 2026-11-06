@@ -27,7 +27,7 @@
 
 #include <MarkManager.hxx>
 #include <bookmrk.hxx>
-#include <functional>
+#include <boost/bind.hpp>
 #include <cntfrm.hxx>
 #include <crossrefbookmark.hxx>
 #include <annotationmark.hxx>
@@ -143,7 +143,7 @@ namespace
             return lcl_PositionFromCntntNode( pNode, bPosAtEndOfNode );
         }
 
-        return ::std::make_unique<SwPosition>(rOtherPosition);
+        return ::std::unique_ptr<SwPosition>(new SwPosition(rOtherPosition));
     };
 
     static IMark* lcl_getMarkAfter(const IDocumentMarkAccess::container_t& rMarks, const SwPosition& rPos)
@@ -152,7 +152,7 @@ namespace
             rMarks.begin(),
             rMarks.end(),
             rPos,
-            [](const auto& pos, const auto& mark) { return mark->StartsAfter(pos); }); // finds the first that is starting after
+            bind(&IMark::StartsAfter, _2, _1)); // finds the first that is starting after
         if(pMarkAfter == rMarks.end()) return NULL;
         return pMarkAfter->get();
     };
@@ -166,14 +166,14 @@ namespace
             rMarks.begin(),
             rMarks.end(),
             rPos,
-            [](const auto& pos, const auto& mark) { return mark->StartsAfter(pos); });
+            bind(&IMark::StartsAfter, _2, _1));
         vCandidates.reserve(pCandidatesEnd - rMarks.begin());
         // only marks ending before are candidates
         remove_copy_if(
             rMarks.begin(),
             pCandidatesEnd,
             back_inserter(vCandidates),
-            [&](const auto& mark) { return !mark->EndsBefore(rPos); } );
+            boost::bind( ::std::logical_not<bool>(), bind( &IMark::EndsBefore, _1, rPos ) ) );
         // no candidate left => we are in front of the first mark or there are none
         if(!vCandidates.size()) return NULL;
         // return the highest (last) candidate using mark end ordering
@@ -246,7 +246,7 @@ namespace
         for(IDocumentMarkAccess::iterator_t ppCurrentMark = lower_bound(
                 rMarks.begin(), rMarks.end(),
                 rPos,
-                [](const auto& mark, const auto& pos) { return mark->StartsBefore(pos); }));
+                bind(&IMark::StartsBefore, _1, _2));
             ppCurrentMark != rMarks.end();
             ++ppCurrentMark)
         {
@@ -274,7 +274,7 @@ namespace
         return find_if(
             ppMarksBegin,
             ppMarksEnd,
-            [&](const auto& mark) { return ::rtl::OUString::equals(mark->GetName(), rName); });
+            bind(&::rtl::OUString::equals, bind(&IMark::GetName, _1), rName));
     }
 
 #if 0
@@ -899,13 +899,13 @@ namespace sw { namespace mark
                 m_vAllMarks.begin(),
                 m_vAllMarks.end(),
                 pMark->GetMarkStart(),
-                [](const auto& mark, const auto& pos) { return mark->StartsBefore(pos); } );
+                bind(&IMark::StartsBefore, _1, _2) );
         iterator_t pMarkHigh = m_vAllMarks.end();
         iterator_t pMarkFound =
             find_if(
                 pMarkLow,
                 pMarkHigh,
-                [&](const auto& mark) { return mark.get() == pMark; } );
+                boost::bind( ::std::equal_to<const IMark*>(), bind(&std::shared_ptr<IMark>::get, _1), pMark ) );
         if(pMarkFound != pMarkHigh)
             deleteMark(pMarkFound);
     }
@@ -960,7 +960,7 @@ namespace sw { namespace mark
         const_iterator_t pFieldmark = find_if(
             m_vFieldmarks.begin(),
             m_vFieldmarks.end( ),
-            [&](const auto& mark) { return mark->IsCoveringPosition(rPos); });
+            bind(&IMark::IsCoveringPosition, _1, rPos));
         if(pFieldmark == m_vFieldmarks.end()) return NULL;
         return dynamic_cast<IFieldmark*>(pFieldmark->get());
     }

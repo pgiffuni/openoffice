@@ -42,6 +42,7 @@
 #include <com/sun/star/awt/XWindowPeer.hpp>
 #include <com/sun/star/rendering/CompositeOperation.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <memory>
 
 using namespace ::com::sun::star;
 using namespace ::com::sun::star::uno;
@@ -56,7 +57,7 @@ namespace {
     class PaneGroup;
 
     class PresenterPaneAnimatorBase
-        : public ::boost::enable_shared_from_this<PresenterPaneAnimatorBase>,
+        : public ::std::enable_shared_from_this<PresenterPaneAnimatorBase>,
           public PresenterPaneAnimator
     {
     public:
@@ -80,7 +81,7 @@ namespace {
         ::rtl::Reference<PresenterController> mpPresenterController;
         ::rtl::Reference<PresenterPaneContainer> mpPaneContainer;
         ::rtl::Reference<PresenterWindowManager> mpWindowManager;
-        ::std::vector< ::boost::shared_ptr<PaneGroup> > maPaneGroups;
+        ::std::vector< ::std::shared_ptr<PaneGroup> > maPaneGroups;
         css::uno::Reference<css::drawing::framework::XResourceId> mxCenterPaneId;
         bool mbDoAnimation;
         EndActions maShowEndActions;
@@ -135,7 +136,7 @@ namespace {
         virtual void HidePane (void);
 
     private:
-        ::boost::shared_ptr<PresenterSprite> maNewPaneSprite;
+        ::std::shared_ptr<PresenterSprite> maNewPaneSprite;
         geometry::RealRectangle2D maCenterPaneBox;
 
         void CreateShowAnimation (
@@ -203,7 +204,7 @@ namespace {
         void CreateSubstitution (const Reference<rendering::XSpriteCanvas>& rxCanvas);
         void ThawPanes (void);
         void Restore (void);
-        ::boost::shared_ptr<PresenterSprite> GetSubstitution (void);
+        ::std::shared_ptr<PresenterSprite> GetSubstitution (void);
         css::geometry::RealRectangle2D GetOriginalBoundingBox (void) const;
         css::geometry::RealRectangle2D GetCurrentBoundingBox (void) const;
         void MovePanes (
@@ -219,10 +220,10 @@ namespace {
         vector<PaneDescriptor> maPanes;
         awt::Rectangle maOriginalBoundingBox;
         css::geometry::RealRectangle2D maCurrentBoundingBox;
-        ::boost::shared_ptr<PresenterSprite> mpSubstitution;
+        ::std::shared_ptr<PresenterSprite> mpSubstitution;
 
     };
-    typedef ::boost::shared_ptr<PaneGroup> SharedPaneGroup;
+    typedef ::std::shared_ptr<PaneGroup> SharedPaneGroup;
 
     void InterpolatePosition (
         const ::boost::function<void(geometry::RealPoint2D)>& rSetter,
@@ -241,7 +242,7 @@ namespace {
         const rtl::Reference<PresenterPaneContainer>& rpPaneContainer,
         const Reference<XResourceId>& rxPaneId,
         const Reference<awt::XWindow>& rxSpriteOwnerWindow,
-        const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager,
+        const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager,
         const bool bAppear,
         const double nX,
         const double nInitialTop,
@@ -265,14 +266,14 @@ namespace {
 //=============================================================================
 
 
-::boost::shared_ptr<PresenterPaneAnimator> CreateUnfoldInCenterAnimator (
+::std::shared_ptr<PresenterPaneAnimator> CreateUnfoldInCenterAnimator (
     const css::uno::Reference<css::drawing::framework::XResourceId>& rxPaneId,
     const ::rtl::Reference<PresenterController>& rpPresenterController,
     const bool bAnimate,
     const EndActions& rShowEndActions,
     const EndActions& rEndEndActions)
 {
-    return ::boost::shared_ptr<PresenterPaneAnimator>(
+    return ::std::shared_ptr<PresenterPaneAnimator>(
         new UnfoldInCenterAnimator(rxPaneId, rpPresenterController, bAnimate,
             rShowEndActions, rEndEndActions));
 }
@@ -280,14 +281,14 @@ namespace {
 
 
 
-::boost::shared_ptr<PresenterPaneAnimator> CreateMoveInFromBottomAnimator (
+::std::shared_ptr<PresenterPaneAnimator> CreateMoveInFromBottomAnimator (
         const css::uno::Reference<css::drawing::framework::XResourceId>& rxPaneId,
         const ::rtl::Reference<PresenterController>& rpPresenterController,
         const bool bAnimate,
         const EndActions& rShowEndActions,
         const EndActions& rEndEndActions)
 {
-    return ::boost::shared_ptr<PresenterPaneAnimator>(
+    return ::std::shared_ptr<PresenterPaneAnimator>(
         new MoveInFromBottomAnimator(rxPaneId, rpPresenterController, bAnimate,
             rShowEndActions, rEndEndActions));
 }
@@ -295,14 +296,14 @@ namespace {
 
 
 
-::boost::shared_ptr<PresenterPaneAnimator> CreateTransparentOverlay (
+::std::shared_ptr<PresenterPaneAnimator> CreateTransparentOverlay (
         const css::uno::Reference<css::drawing::framework::XResourceId>& rxPaneId,
         const ::rtl::Reference<PresenterController>& rpPresenterController,
         const bool bAnimate,
         const EndActions& rShowEndActions,
         const EndActions& rEndEndActions)
 {
-    return ::boost::shared_ptr<PresenterPaneAnimator>(
+    return ::std::shared_ptr<PresenterPaneAnimator>(
         new TransparentOverlayAnimator(rxPaneId, rpPresenterController, bAnimate,
             rShowEndActions, rEndEndActions));
 }
@@ -546,7 +547,7 @@ void UnfoldInCenterAnimator::ShowPane (void)
     }
 
     // Animate the upper and lower window bitmaps.
-    ::boost::shared_ptr<MultiAnimation> pMultiAnimation (
+    ::std::shared_ptr<MultiAnimation> pMultiAnimation (
         new MultiAnimation(mbDoAnimation ? 500 : 0));
 
     // Animate the pane group sprites to be moved up or down.
@@ -592,7 +593,7 @@ void UnfoldInCenterAnimator::ShowPane (void)
         pMultiAnimation->AddEndCallback(*iAction);
 
     // Start the animation.
-    ::boost::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
+    ::std::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
     OSL_ASSERT(pAnimator.get()!=NULL);
     pAnimator->AddAnimation(SharedPresenterAnimation(pMultiAnimation));
 
@@ -613,7 +614,7 @@ void UnfoldInCenterAnimator::HidePane (void)
     DeactivatePanes();
     DeactivatePane(mxCenterPaneId);
 
-    ::boost::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
+    ::std::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
     const awt::Rectangle aWindowBox (xParentWindow->getPosSize());
     const rendering::ViewState aViewState (
         geometry::AffineMatrix2D(1,0,0, 0,1,0),
@@ -626,7 +627,7 @@ void UnfoldInCenterAnimator::HidePane (void)
 
     // Animate the upper and lower window bitmaps.
     Reference<rendering::XSpriteCanvas> xSpriteCanvas (mpWindowManager->GetParentCanvas(), UNO_QUERY);
-    ::boost::shared_ptr<MultiAnimation> pMultiAnimation (new MultiAnimation(mbDoAnimation ? 500 : 1));
+    ::std::shared_ptr<MultiAnimation> pMultiAnimation (new MultiAnimation(mbDoAnimation ? 500 : 1));
 
     vector<SharedPaneGroup>::const_iterator iGroup;
     for (iGroup=maPaneGroups.begin(); iGroup!=maPaneGroups.end(); ++iGroup)
@@ -846,7 +847,7 @@ void MoveInFromBottomAnimator::HidePane (void)
 
     aPanes->ShowPanes();
 
-    ::boost::shared_ptr<MultiAnimation> pMultiAnimation (
+    ::std::shared_ptr<MultiAnimation> pMultiAnimation (
         new MultiAnimation(mbDoAnimation ? 500 : 0));
     awt::Rectangle aWindowBox (xParentWindow->getPosSize());
 
@@ -871,7 +872,7 @@ void MoveInFromBottomAnimator::HidePane (void)
     for (iAction=maHideEndActions.begin(); iAction!=maHideEndActions.end(); ++iAction)
         pMultiAnimation->AddEndCallback(*iAction);
 
-    ::boost::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
+    ::std::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
     pAnimator->AddAnimation(SharedPresenterAnimation(pMultiAnimation));
 }
 
@@ -887,7 +888,7 @@ void MoveInFromBottomAnimator::CreateShowAnimation (
     const geometry::RealPoint2D& rEndLocation)
 {
     // Animate the upper and lower window bitmaps.
-    ::boost::shared_ptr<MultiAnimation> pMultiAnimation (new MultiAnimation(bAnimate ? 500 : 0));
+    ::std::shared_ptr<MultiAnimation> pMultiAnimation (new MultiAnimation(bAnimate ? 500 : 0));
 
     // Animate new pane to move in from the bottom.
     pMultiAnimation->AddAnimation(
@@ -914,7 +915,7 @@ void MoveInFromBottomAnimator::CreateShowAnimation (
         pMultiAnimation->AddEndCallback(*iAction);
 
     // Start the animation.
-    ::boost::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
+    ::std::shared_ptr<PresenterAnimator> pAnimator (mpPresenterController->GetAnimator());
     OSL_ASSERT(pAnimator.get()!=NULL);
     pAnimator->AddAnimation(SharedPresenterAnimation(pMultiAnimation));
 }
@@ -1133,7 +1134,7 @@ void PaneGroup::Restore (void)
 
 
 
-::boost::shared_ptr<PresenterSprite> PaneGroup::GetSubstitution (void)
+::std::shared_ptr<PresenterSprite> PaneGroup::GetSubstitution (void)
 {
     return mpSubstitution;
 }
@@ -1334,7 +1335,7 @@ void SpriteTransform(
     const rtl::Reference<PresenterPaneContainer>& rpPaneContainer,
     const Reference<XResourceId>& rxPaneId,
     const Reference<awt::XWindow>& rxSpriteOwnerWindow,
-    const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager,
+    const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager,
     const bool bAppear,
     const double nX,
     const double nInitialTop,
@@ -1349,7 +1350,7 @@ void SpriteTransform(
         && ! pDescriptor->maSpriteProvider.empty()
         && pDescriptor->mxBorderWindow.is())
     {
-        ::boost::shared_ptr<PresenterSprite> pSprite (pDescriptor->maSpriteProvider());
+        ::std::shared_ptr<PresenterSprite> pSprite (pDescriptor->maSpriteProvider());
         if (pSprite.get())
         {
             // There seems to be a problem with sprites not correctly
@@ -1391,7 +1392,7 @@ void SpritePaneMove (
         && ! pDescriptor->maSpriteProvider.empty()
         && pDescriptor->mxBorderWindow.is())
     {
-        ::boost::shared_ptr<PresenterSprite> pSprite (pDescriptor->maSpriteProvider());
+        ::std::shared_ptr<PresenterSprite> pSprite (pDescriptor->maSpriteProvider());
         if (pSprite.get() != NULL)
         {
             pDescriptor->mxBorderWindow->setVisible(sal_True);

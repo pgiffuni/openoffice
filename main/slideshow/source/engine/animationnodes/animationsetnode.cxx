@@ -34,6 +34,7 @@
 #include "tools.hxx"
 #include "delayevent.hxx"
 
+#include <boost/bind.hpp>
 #include <memory>
 
 using namespace com::sun::star;
@@ -72,7 +73,8 @@ AnimationActivitySharedPtr AnimationSetNode::createActivity() const
         ENSURE_OR_THROW(
             pSelf, "cannot cast getSelf() to my type!" );
         aParms.mpEndEvent = makeEvent(
-            [pSelf]() { pSelf->implScheduleDeactivationEvent(); },
+            boost::bind( &AnimationSetNode::implScheduleDeactivationEvent,
+                         pSelf ),
             "AnimationSetNode::implScheduleDeactivationEvent");
     }
 

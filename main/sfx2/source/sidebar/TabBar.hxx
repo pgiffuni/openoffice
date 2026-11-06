@@ -31,6 +31,7 @@
 #include <com/sun/star/frame/XFrame.hpp>
 #include <boost/function.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <memory>
 
 class Button;
@@ -99,7 +100,7 @@ public:
 
 private:
     cssu::Reference<css::frame::XFrame> mxFrame;
-    ::std::unique_ptr<CheckBox> mpMenuButton;
+    ::boost::scoped_ptr<CheckBox> mpMenuButton;
     class Item
     {
     public:

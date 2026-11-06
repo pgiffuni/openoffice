@@ -34,6 +34,7 @@
 
 #include "shapemanagerimpl.hxx"
 
+#include <boost/bind.hpp>
 #include <memory>
 
 using namespace com::sun::star;
@@ -74,12 +75,24 @@ void ShapeManagerImpl::activate( bool bSlideBackgoundPainted )
         uno::Reference<presentation::XShapeEventListener> xDummyListener;
         std::for_each( mrGlobalListenersMap.begin(),
                        mrGlobalListenersMap.end(),
-                       [&](const auto& pair) { this->listenerAdded( xDummyListener, pair.first ); } );
+                       boost::bind( &ShapeManagerImpl::listenerAdded,
+                                    this,
+                                    boost::cref(xDummyListener),
+                                    boost::bind(
+                                        std::select1st<ShapeEventListenerMap::value_type>(),
+                                        _1 )));
 
         // clone cursor map
         std::for_each( mrGlobalCursorMap.begin(),
                        mrGlobalCursorMap.end(),
-                       [&](const auto& pair) { this->cursorChanged( pair.first, pair.second ); } );
+                       boost::bind( &ShapeManagerImpl::cursorChanged,
+                                    this,
+                                    boost::bind(
+                                        std::select1st<ShapeCursorMap::value_type>(),
+                                        _1 ),
+                                    boost::bind(
+                                        std::select2nd<ShapeCursorMap::value_type>(),
+                                        _1 )));
 
         if( mpLayerManager )
             mpLayerManager->activate( bSlideBackgoundPainted );
@@ -161,7 +174,10 @@ bool ShapeManagerImpl::handleMouseReleased( awt::MouseEvent const& e )
 
             // DON'T do anything with /this/ after this point!
             pCont->forEach<presentation::XShapeEventListener>(
-                [&](const auto& listener) { listener->click( xShape, e ); } );
+                boost::bind( &presentation::XShapeEventListener::click,
+                             _1,
+                             boost::cref(xShape),
+                             boost::cref(e) ));
 
             return true; // handled this event
         }

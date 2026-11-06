@@ -275,7 +275,7 @@ Sequence< Type > SAL_CALL ODatabaseDocument::getTypes(	)
                 aTypes.getConstArray(),
                 aTypes.getConstArray() + aTypes.getLength(),
                 pStripTo,
-                ::std::bind2nd( ::std::equal_to< Type >(), XEmbeddedScripts::static_type() )
+                [XEmbeddedScripts::static_type()](auto& _x) { return ::std::equal_to< Type >()(_x, XEmbeddedScripts::static_type()); }
             ) - pStripTo
         );
 
@@ -286,7 +286,7 @@ Sequence< Type > SAL_CALL ODatabaseDocument::getTypes(	)
                 aTypes.getConstArray(),
                 aTypes.getConstArray() + aTypes.getLength(),
                 pStripTo,
-                ::std::bind2nd( ::std::equal_to< Type >(), XScriptInvocationContext::static_type() )
+                [XScriptInvocationContext::static_type()](auto& _x) { return ::std::equal_to< Type >()(_x, XScriptInvocationContext::static_type()); }
             ) - pStripTo
         );
     }
@@ -1435,7 +1435,7 @@ void ODatabaseDocument::impl_closeControllerFrames_nolck_throw( sal_Bool _bDeliv
 }
 
 // -----------------------------------------------------------------------------
-struct DisposeControllerFrame : public ::std::unary_function< Reference< XController >, void >
+struct DisposeControllerFrame
 {
     void operator()( const Reference< XController >& _rxController ) const
     {
@@ -1996,7 +1996,7 @@ Reference< XInterface > ODatabaseDocument::getThis() const
     return *const_cast< ODatabaseDocument* >( this );
 }
 // -----------------------------------------------------------------------------
-struct CreateAny : public ::std::unary_function< Reference<XController>, Any>
+struct CreateAny , Any>
 {
     Any operator() (const Reference<XController>& lhs) const
     {

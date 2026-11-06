@@ -64,9 +64,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/scoped_array.hpp>
 #include <memory>
-#include <memory>
-#include <functional>
 
 
 using namespace css;
@@ -115,25 +114,22 @@ SidebarController::SidebarController (
       mpTabBar(new TabBar(
               mpParentWindow,
               rxFrame,
-              [this](const ::rtl::OUString& rsDeckId) { OpenThenSwitchToDeck(rsDeckId); },
-              [this](const Rectangle& rButtonBox,
-                     const ::std::vector<TabBar::DeckMenuData>& rMenuData) {
-                  ShowPopupMenu(rButtonBox, rMenuData);
-              })),
+              ::boost::bind(&SidebarController::OpenThenSwitchToDeck, this, _1),
+              ::boost::bind(&SidebarController::ShowPopupMenu, this, _1,_2))),
       mxFrame(rxFrame),
       maCurrentContext(OUString(), OUString()),
       maRequestedContext(),
       mnRequestedForceFlags(SwitchFlag_NoForce),
       msCurrentDeckId(gsDefaultDeckId),
       msCurrentDeckTitle(),
-      maPropertyChangeForwarder(std::bind(&SidebarController::BroadcastPropertyChange, this)),
-      maContextChangeUpdate(std::bind(&SidebarController::UpdateConfigurations, this)),
+      maPropertyChangeForwarder(::boost::bind(&SidebarController::BroadcastPropertyChange, this)),
+      maContextChangeUpdate(::boost::bind(&SidebarController::UpdateConfigurations, this)),
       maAsynchronousDeckSwitch(),
       mbIsDeckRequestedOpen(),
       mbIsDeckOpen(),
       mbCanDeckBeOpened(true),
       mnSavedSidebarWidth(pParentWindow->GetSizePixel().Width()),
-      maFocusManager(std::bind(&SidebarController::ShowPanel, this, std::placeholders::_1)),
+      maFocusManager(::boost::bind(&SidebarController::ShowPanel, this, _1)),
       mxReadOnlyModeDispatch(),
       mbIsDocumentReadOnly(false),
       mpSplitWindow(NULL),
@@ -501,7 +497,7 @@ void SidebarController::RequestSwitchToDeck (
 {
     maContextChangeUpdate.CancelRequest();
     maAsynchronousDeckSwitch.RequestCall(
-        [this, rsDeckId]() { OpenThenSwitchToDeck(rsDeckId); });
+        ::boost::bind(&SidebarController::OpenThenSwitchToDeck, this, rsDeckId));
 }
 
 
@@ -583,7 +579,7 @@ void SidebarController::SwitchToDeck (
             new Deck(
                 rDeckDescriptor,
                 mpParentWindow,
-                [this]() { RequestCloseDeck(); }));
+                ::boost::bind(&SidebarController::RequestCloseDeck, this)));
         msCurrentDeckTitle = rDeckDescriptor.msTitle;
 
     }
@@ -628,9 +624,7 @@ void SidebarController::SwitchToDeck (
             iPanel = ::std::find_if(
                 rCurrentPanels.begin(),
                 rCurrentPanels.end(),
-                [&](const SharedPanel& rPanel) {
-                    return rPanel->HasIdPredicate(rPanelContexDescriptor.msId);
-                });
+                ::boost::bind(&Panel::HasIdPredicate, _1, ::boost::cref(rPanelContexDescriptor.msId)));
         }
         if (iPanel != rCurrentPanels.end())
         {
@@ -707,8 +701,8 @@ SharedPanel SidebarController::CreatePanel (
         *pPanelDescriptor,
         pParentWindow,
         bIsInitiallyExpanded,
-        [this]() { mpCurrentDeck->RequestLayout(); },
-        [this]() { return GetCurrentContext(); }));
+        ::boost::bind(&Deck::RequestLayout, mpCurrentDeck.get()),
+        ::boost::bind(&SidebarController::GetCurrentContext, this)));
 
     // Create the XUIElement.
     Reference<ui::XUIElement> xUIElement (CreateUIElement(

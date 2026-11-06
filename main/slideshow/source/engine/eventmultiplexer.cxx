@@ -50,8 +50,8 @@
 #include "unoview.hxx"
 #include "unoviewcontainer.hxx"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
+#include <memory>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -67,7 +67,7 @@ namespace boost
     template<typename T> bool operator==( weak_ptr<T> const& rLHS,
                                           weak_ptr<T> const& rRHS )
     {
-        return !(rLHS<rRHS) && !(rRHS<rLHS);
+        return !(rLHS.owner_before(rRHS)) && !(rRHS.owner_before(rLHS));
     }
 }
 
@@ -77,7 +77,7 @@ namespace internal {
 template <typename HandlerT>
 class PrioritizedHandlerEntry
 {
-    typedef boost::shared_ptr<HandlerT> HandlerSharedPtrT;
+    typedef std::shared_ptr<HandlerT> HandlerSharedPtrT;
     HandlerSharedPtrT mpHandler;
     double            mnPrio;
 
@@ -102,7 +102,7 @@ public:
     bool operator==( PrioritizedHandlerEntry const& rRHS ) const
     {
         // ignore prio, for removal, only the handler ptr matters
-        return mpHandler == rRHS.mpHandler;
+        return !(mpHandler.owner_before(rRHS.mpHandler)) && !(rRHS.mpHandler.owner_before(mpHandler));
     }
 };
 
@@ -315,7 +315,7 @@ struct EventMultiplexerImpl
         setAutomaticMode(true) call is then able to
         regenerate the event.
     */
-    ::boost::weak_ptr< Event >    mpTickEvent;
+    ::std::weak_ptr< Event >    mpTickEvent;
     bool                          mbIsAutoMode;
 };
 

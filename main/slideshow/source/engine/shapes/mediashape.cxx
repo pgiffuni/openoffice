@@ -39,6 +39,7 @@
 #include "tools.hxx"
 
 #include <algorithm>
+#include <memory>
 
 
 using namespace ::com::sun::star;
@@ -269,7 +270,7 @@ namespace slideshow
             double                                   nPrio,
             const SlideShowContext&                  rContext)
         {
-            boost::shared_ptr< MediaShape > pMediaShape(
+            std::shared_ptr< MediaShape > pMediaShape(
                 new MediaShape(xShape, nPrio, rContext));
 
             return pMediaShape;

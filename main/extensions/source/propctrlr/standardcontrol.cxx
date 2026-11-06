@@ -1077,16 +1077,16 @@ namespace pcr
 	DropDownEditControl::~DropDownEditControl()
 	{
 		{
-			::std::auto_ptr<Window> aTemp(m_pFloatingEdit);
+			::std::unique_ptr<Window> aTemp(m_pFloatingEdit);
 			m_pFloatingEdit = NULL;
 		}
 		{
-			::std::auto_ptr<Window> aTemp(m_pImplEdit);
+			::std::unique_ptr<Window> aTemp(m_pImplEdit);
             SetSubEdit( NULL );
 			m_pImplEdit = NULL;
 		}
 		{
-			::std::auto_ptr<Window> aTemp(m_pDropdownButton);
+			::std::unique_ptr<Window> aTemp(m_pDropdownButton);
 			m_pDropdownButton = NULL;
 		}
 	}

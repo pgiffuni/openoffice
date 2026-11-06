@@ -34,7 +34,7 @@
 #include <canvas/rendering/isurfaceproxymanager.hxx>
 
 #include <memory>
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include <vector>
 
 namespace basegfx
@@ -307,7 +307,7 @@ namespace canvas
     private:
         friend class ImplBitmap;
 
-        const ::std::unique_ptr< ImplBitmap > mpImpl;
+        const ::boost::scoped_ptr< ImplBitmap > mpImpl;
 	};
 
     typedef ::std::shared_ptr< Bitmap > BitmapSharedPtr;

@@ -39,7 +39,7 @@
 #include <com/sun/star/rendering/TexturingMode.hpp>
 #include <com/sun/star/rendering/XPolyPolygon2D.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
 #include <math.h>
 
 using namespace ::com::sun::star;
@@ -55,7 +55,7 @@ namespace sdext { namespace presenter {
 //===== PresenterScrollBar::MousePressRepeater ================================
 
 class PresenterScrollBar::MousePressRepeater
-    : public ::boost::enable_shared_from_this<MousePressRepeater>
+    : public ::std::enable_shared_from_this<MousePressRepeater>
 {
 public:
     MousePressRepeater (const ::rtl::Reference<PresenterScrollBar>& rpScrollBar);
@@ -78,12 +78,12 @@ private:
 
 //===== PresenterScrollBar ====================================================
 
-boost::weak_ptr<PresenterBitmapContainer> PresenterScrollBar::mpSharedBitmaps;
+std::weak_ptr<PresenterBitmapContainer> PresenterScrollBar::mpSharedBitmaps;
 
 PresenterScrollBar::PresenterScrollBar (
     const Reference<XComponentContext>& rxComponentContext,
     const Reference<awt::XWindow>& rxParentWindow,
-    const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager,
+    const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager,
     const ::boost::function<void(double)>& rThumbMotionListener)
     : PresenterScrollBarInterfaceBase(m_aMutex),
       mxComponentContext(rxComponentContext),
@@ -325,7 +325,7 @@ void PresenterScrollBar::SetCanvas (const Reference<css::rendering::XCanvas>& rx
                     {
                         mpBitmaps.reset(new PresenterBitmapContainer(
                             OUString::createFromAscii("PresenterScreenSettings/ScrollBar/Bitmaps"),
-                            ::boost::shared_ptr<PresenterBitmapContainer>(),
+                            ::std::shared_ptr<PresenterBitmapContainer>(),
                             mxComponentContext,
                             mxCanvas));
                         mpSharedBitmaps = mpBitmaps;
@@ -336,7 +336,7 @@ void PresenterScrollBar::SetCanvas (const Reference<css::rendering::XCanvas>& rx
                     }
                 }
                 else
-                    mpBitmaps = ::boost::shared_ptr<PresenterBitmapContainer>(mpSharedBitmaps);
+                    mpBitmaps = ::std::shared_ptr<PresenterBitmapContainer>(mpSharedBitmaps);
                 UpdateBitmaps();
                 UpdateBorders();
             }
@@ -772,7 +772,7 @@ bool PresenterScrollBar::IsDisabled (const Area eArea) const
 PresenterVerticalScrollBar::PresenterVerticalScrollBar (
     const Reference<XComponentContext>& rxComponentContext,
     const Reference<awt::XWindow>& rxParentWindow,
-    const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager,
+    const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager,
     const ::boost::function<void(double)>& rThumbMotionListener)
     : PresenterScrollBar(rxComponentContext, rxParentWindow, rpPaintManager, rThumbMotionListener),
       mnScrollBarWidth(0)
@@ -993,7 +993,7 @@ void PresenterVerticalScrollBar::PaintComposite(
 PresenterHorizontalScrollBar::PresenterHorizontalScrollBar (
     const Reference<XComponentContext>& rxComponentContext,
     const Reference<awt::XWindow>& rxParentWindow,
-    const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager,
+    const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager,
     const ::boost::function<void(double)>& rThumbMotionListener)
     : PresenterScrollBar(rxComponentContext, rxParentWindow, rpPaintManager, rThumbMotionListener),
       mnScrollBarHeight(0)

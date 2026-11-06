@@ -26,8 +26,8 @@
 
 #include <vector>
 
-#include <memory>
-#include <tuple>
+#include <boost/scoped_array.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <tools/solar.h>
 #include <tools/debug.hxx>
@@ -534,8 +534,8 @@ struct SAL_DLLPRIVATE XMLTextImportHelper::Impl
     ::std::unique_ptr<SvXMLTokenMap> m_pTextContourAttrTokenMap;
     ::std::unique_ptr<SvXMLTokenMap> m_pTextHyperlinkAttrTokenMap;
     ::std::unique_ptr<SvXMLTokenMap> m_pTextMasterPageElemTokenMap;
-    ::std::unique_ptr<SvStringsDtor[]> m_pPrevFrmNames;
-    ::std::unique_ptr<SvStringsDtor[]> m_pNextFrmNames;
+    ::std::unique_ptr<SvStringsDtor> m_pPrevFrmNames;
+    ::std::unique_ptr<SvStringsDtor> m_pNextFrmNames;
 
     // --> OD 2008-04-25 #refactorlists#
     ::std::unique_ptr<XMLTextListsHelper> m_pTextListsHelper;
@@ -552,18 +552,18 @@ struct SAL_DLLPRIVATE XMLTextImportHelper::Impl
     UniReference< SvXMLImportPropertyMapper > m_xSectionImpPrMap;
     UniReference< SvXMLImportPropertyMapper > m_xRubyImpPrMap;
 
-    ::std::unique_ptr<SvI18NMap[]> m_pRenameMap;
+    ::std::unique_ptr<SvI18NMap> m_pRenameMap;
     // --> OD 2006-10-12 #i69629# - change and extend data structure:
     // - data structure contains candidates of paragraph styles, which
     //   will be assigned to the outline style
     // - data structure contains more than one candidate for each list level
     //   of the outline style
-    ::std::unique_ptr< ::std::vector< ::rtl::OUString >[] >
+    ::boost::scoped_array< ::std::vector< ::rtl::OUString > >
         m_pOutlineStylesCandidates;
     // <--
 
     // start range, xml:id, RDFa stuff
-    typedef ::std::tuple<
+    typedef ::boost::tuple<
         uno::Reference<text::XTextRange>, ::rtl::OUString,
         ::std::shared_ptr< ::xmloff::ParsedRDFaAttributes > >
             BookmarkMapEntry_t;
@@ -2725,7 +2725,7 @@ void XMLTextImportHelper::InsertBookmarkStartRange(
     ::std::shared_ptr< ::xmloff::ParsedRDFaAttributes > & i_rpRDFaAttributes)
 {
     m_pImpl->m_BookmarkStartRanges[sName] =
-        ::std::make_tuple(rRange, i_rXmlId, i_rpRDFaAttributes);
+        ::boost::make_tuple(rRange, i_rXmlId, i_rpRDFaAttributes);
     m_pImpl->m_BookmarkVector.push_back(sName);
 }
 

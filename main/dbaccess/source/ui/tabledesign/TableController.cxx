@@ -78,6 +78,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 
 extern "C" void SAL_CALL createRegistryInfo_OTableControl()
 {
@@ -117,9 +118,9 @@ namespace
 		}
 	}
 	//------------------------------------------------------------------------------
-	struct OTableRowCompare : public ::std::binary_function<  ::boost::shared_ptr<OTableRow> , ::rtl::OUString, bool>
+	struct OTableRowCompare  , ::rtl::OUString, bool>
 	{
-		bool operator() (const  ::boost::shared_ptr<OTableRow>  lhs, const ::rtl::OUString& rhs) const
+		bool operator() (const  ::std::shared_ptr<OTableRow>  lhs, const ::rtl::OUString& rhs) const
 		{
 			OFieldDescription* pField = lhs->GetActFieldDescr();
 			return pField && pField->GetName() == rhs;
@@ -223,7 +224,7 @@ FeatureState OTableController::GetState(sal_uInt16 _nId) const
 			aReturn.bEnabled = impl_isModified();
 			if ( aReturn.bEnabled )
 			{
-				::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
+				::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
 					::boost::mem_fn(&OTableRow::isValid));
 				aReturn.bEnabled = aIter != m_vRowList.end();
 			}
@@ -232,7 +233,7 @@ FeatureState OTableController::GetState(sal_uInt16 _nId) const
 			aReturn.bEnabled = isConnected() && isEditable();
 			if ( aReturn.bEnabled )
 			{
-				::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
+				::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
 					::boost::mem_fn(&OTableRow::isValid));
 				aReturn.bEnabled = aIter != m_vRowList.end();
 			}
@@ -256,7 +257,7 @@ FeatureState OTableController::GetState(sal_uInt16 _nId) const
 				);
 			if ( aReturn.bEnabled )
 			{
-				::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
+				::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
 					::boost::mem_fn(&OTableRow::isValid));
 				aReturn.bEnabled = aIter != m_vRowList.end();
 			}
@@ -593,7 +594,7 @@ sal_Bool SAL_CALL OTableController::suspend(sal_Bool /*_bSuspend*/)
 	sal_Bool bCheck = sal_True;
 	if ( isModified() )
 	{
-		::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
+		::std::vector< ::std::shared_ptr<OTableRow> >::iterator aIter = ::std::find_if(m_vRowList.begin(),m_vRowList.end(),
 			::boost::mem_fn(&OTableRow::isValid));
 		if ( aIter != m_vRowList.end() )
 		{
@@ -733,8 +734,8 @@ void OTableController::appendColumns(Reference<XColumnsSupplier>& _rxColSup,sal_
 		Reference<XAppend> xAppend(xColumns,UNO_QUERY);
 		OSL_ENSURE(xAppend.is(),"No XAppend Interface!");
 
-		::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
-		::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
+		::std::vector< ::std::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
+		::std::vector< ::std::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
 		for(;aIter != aEnd;++aIter)
 		{
 			OSL_ENSURE(*aIter,"OTableRow is null!");
@@ -825,7 +826,7 @@ void OTableController::loadData()
 	// Wenn Datenstruktur bereits vorhanden, Struktur leeren
 	m_vRowList.clear();
 
-	::boost::shared_ptr<OTableRow>  pTabEdRow;
+	::std::shared_ptr<OTableRow>  pTabEdRow;
 	Reference< XDatabaseMetaData> xMetaData = getMetaData( );
 	//////////////////////////////////////////////////////////////////////
 	// Datenstruktur mit Daten aus DatenDefinitionsObjekt füllen
@@ -925,8 +926,8 @@ void OTableController::loadData()
 
 			for(;pKeyBegin != pKeyEnd;++pKeyBegin)
 			{
-				::std::vector< ::boost::shared_ptr<OTableRow> >::iterator rowIter = m_vRowList.begin();
-                ::std::vector< ::boost::shared_ptr<OTableRow> >::iterator rowEnd = m_vRowList.end();
+				::std::vector< ::std::shared_ptr<OTableRow> >::iterator rowIter = m_vRowList.begin();
+                ::std::vector< ::std::shared_ptr<OTableRow> >::iterator rowEnd = m_vRowList.end();
                 for(;rowIter != rowEnd;++rowIter)
 				{
 					if((*rowIter)->GetActFieldDescr()->GetName() == *pKeyBegin)
@@ -970,8 +971,8 @@ sal_Bool OTableController::checkColumns(sal_Bool _bNew)
 	DatabaseMetaData aMetaData( getConnection() );
 
 	::comphelper::UStringMixEqual bCase(xMetaData.is() ? xMetaData->supportsMixedCaseQuotedIdentifiers() : sal_True);
-	::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
-	::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
+	::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
+	::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
 	for(;aIter != aEnd;++aIter)
 	{
 		OFieldDescription* pFieldDesc = (*aIter)->GetActFieldDescr();
@@ -979,7 +980,7 @@ sal_Bool OTableController::checkColumns(sal_Bool _bNew)
 		{
 			bFoundPKey |=  (*aIter)->IsPrimaryKey();
 			// first check for duplicate names
-			::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter2 = aIter+1;
+			::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter2 = aIter+1;
 			for(;aIter2 != aEnd;++aIter2)
 			{
 				OFieldDescription* pCompareDesc = (*aIter2)->GetActFieldDescr();
@@ -1003,7 +1004,7 @@ sal_Bool OTableController::checkColumns(sal_Bool _bNew)
         {
         case RET_YES:
 	    {
-		    ::boost::shared_ptr<OTableRow>  pNewRow(new OTableRow());
+		    ::std::shared_ptr<OTableRow>  pNewRow(new OTableRow());
 		    TOTypeInfoSP pTypeInfo = ::dbaui::queryPrimaryKeyType(m_aTypeInfo);
 		    if ( !pTypeInfo.get() )
                 break;
@@ -1053,8 +1054,8 @@ void OTableController::alterColumns()
 	Reference< XDatabaseMetaData> xMetaData = getMetaData( );
 
 	::std::map< ::rtl::OUString,sal_Bool,::comphelper::UStringMixLess> aColumns(xMetaData.is() ? (xMetaData->supportsMixedCaseQuotedIdentifiers() ? true : false): sal_True);
-	::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
-	::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
+	::std::vector< ::std::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
+	::std::vector< ::std::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
 	// first look for columns where something other than the name changed
 	sal_Int32 nPos = 0;
 	for(;aIter != aEnd;++aIter,++nPos)
@@ -1496,8 +1497,8 @@ void OTableController::reSyncRows()
 {
 	sal_Bool bAlterAllowed	= isAlterAllowed();
 	sal_Bool bAddAllowed	= isAddAllowed();
-	::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
-    ::std::vector< ::boost::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
+	::std::vector< ::std::shared_ptr<OTableRow> >::iterator aIter = m_vRowList.begin();
+    ::std::vector< ::std::shared_ptr<OTableRow> >::iterator aEnd = m_vRowList.end();
 	for(;aIter != aEnd;++aIter)
 	{
 		OSL_ENSURE(*aIter,"OTableRow is null!");
@@ -1521,8 +1522,8 @@ void OTableController::reSyncRows()
 
 	::comphelper::UStringMixEqual bCase(xMetaData.is() ? xMetaData->supportsMixedCaseQuotedIdentifiers() : sal_True);
 
-	::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
-    ::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
+	::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
+    ::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
 	for(sal_Int32 i=0;aIter != aEnd;++aIter)
 	{
 		OFieldDescription* pFieldDesc = (*aIter)->GetActFieldDescr();
@@ -1574,8 +1575,8 @@ void OTableController::reload()
 sal_Int32 OTableController::getFirstEmptyRowPosition()
 {
 	sal_Int32 nRet = -1;
-	::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
-	::std::vector< ::boost::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
+	::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aIter = m_vRowList.begin();
+	::std::vector< ::std::shared_ptr<OTableRow> >::const_iterator aEnd = m_vRowList.end();
 	for(;aIter != aEnd;++aIter)
 	{
 		if ( !*aIter || !(*aIter)->GetActFieldDescr() || !(*aIter)->GetActFieldDescr()->GetName().getLength() )
@@ -1587,7 +1588,7 @@ sal_Int32 OTableController::getFirstEmptyRowPosition()
     if ( nRet == -1 )
     {
         bool bReadRow = !isAddAllowed();
-	    ::boost::shared_ptr<OTableRow> pTabEdRow(new OTableRow());
+	    ::std::shared_ptr<OTableRow> pTabEdRow(new OTableRow());
 	    pTabEdRow->SetReadOnly(bReadRow);
         nRet = m_vRowList.size();
 	    m_vRowList.push_back( pTabEdRow);

@@ -33,6 +33,7 @@
 #include <com/sun/star/rendering/CompositeOperation.hpp>
 #include <com/sun/star/rendering/XIntegerBitmap.hpp>
 #include <map>
+#include <memory>
 
 using namespace ::com::sun::star;
 using namespace ::com::sun::star::uno;
@@ -64,7 +65,7 @@ static OUString gsVerticalTexturingModeProperty (A2S("VerticalTexturingMode"));
 
 PresenterBitmapContainer::PresenterBitmapContainer (
     const ::rtl::OUString& rsConfigurationBase,
-    const ::boost::shared_ptr<PresenterBitmapContainer>& rpParentContainer,
+    const ::std::shared_ptr<PresenterBitmapContainer>& rpParentContainer,
     const css::uno::Reference<css::uno::XComponentContext>& rxComponentContext,
     const css::uno::Reference<css::rendering::XCanvas>& rxCanvas,
     const css::uno::Reference<css::drawing::XPresenterHelper>& rxPresenterHelper)
@@ -93,7 +94,7 @@ PresenterBitmapContainer::PresenterBitmapContainer (
 
 PresenterBitmapContainer::PresenterBitmapContainer (
     const css::uno::Reference<css::container::XNameAccess>& rxRootNode,
-    const ::boost::shared_ptr<PresenterBitmapContainer>& rpParentContainer,
+    const ::std::shared_ptr<PresenterBitmapContainer>& rpParentContainer,
     const css::uno::Reference<css::uno::XComponentContext>& rxComponentContext,
     const css::uno::Reference<css::rendering::XCanvas>& rxCanvas,
     const css::uno::Reference<css::drawing::XPresenterHelper>& rxPresenterHelper)
@@ -360,7 +361,7 @@ PresenterBitmapContainer::BitmapDescriptor::BitmapDescriptor (void)
 
 
 PresenterBitmapContainer::BitmapDescriptor::BitmapDescriptor (
-    const ::boost::shared_ptr<PresenterBitmapContainer::BitmapDescriptor>& rpDefault)
+    const ::std::shared_ptr<PresenterBitmapContainer::BitmapDescriptor>& rpDefault)
     : mnWidth(0),
       mnHeight(0),
       mnXOffset(0),

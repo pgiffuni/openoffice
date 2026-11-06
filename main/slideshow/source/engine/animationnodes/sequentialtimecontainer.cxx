@@ -33,6 +33,7 @@
 #include "sequentialtimecontainer.hxx"
 #include "tools.hxx"
 
+#include <boost/bind.hpp>
 #include <algorithm>
 
 namespace slideshow {
@@ -56,7 +57,7 @@ void SequentialTimeContainer::activate_st()
         // deactivate ASAP:
         scheduleDeactivationEvent(
             makeEvent(
-                 [pSelf = getSelf()]() { pSelf->deactivate(); },
+                 boost::bind< void >( boost::mem_fn( &AnimationNode::deactivate ), getSelf() ),
                  "SequentialTimeContainer::deactivate") );
     }
     else // use default
@@ -84,7 +85,7 @@ void SequentialTimeContainer::skipEffect(
         getContext().mrEventQueue.forceEmpty();
         getContext().mrEventQueue.addEvent(
             makeEvent(
-                [pChildNode]() { pChildNode->deactivate(); },
+                boost::bind<void>( boost::mem_fn( &AnimationNode::deactivate ), pChildNode ),
                 "SequentialTimeContainer::deactivate, skipEffect with delay") );
     }
     else
@@ -110,11 +111,15 @@ bool SequentialTimeContainer::resolveChild(
 
         // event that will deactivate the resolved/running child:
         mpCurrentSkipEvent = makeEvent(
-            [pSelf = std::dynamic_pointer_cast<SequentialTimeContainer>( getSelf() ), pChildNode]() { pSelf->skipEffect( pChildNode ); },
+            boost::bind( &SequentialTimeContainer::skipEffect,
+                         std::dynamic_pointer_cast<SequentialTimeContainer>( getSelf() ),
+                         pChildNode ),
             "SequentialTimeContainer::skipEffect, resolveChild");
         // event that will reresolve the resolved/activated child:
         mpCurrentRewindEvent = makeEvent(
-            [pSelf = std::dynamic_pointer_cast<SequentialTimeContainer>( getSelf() ), pChildNode]() { pSelf->rewindEffect( pChildNode ); },
+            boost::bind( &SequentialTimeContainer::rewindEffect,
+                         std::dynamic_pointer_cast<SequentialTimeContainer>( getSelf() ),
+                         pChildNode ),
             "SequentialTimeContainer::rewindEffect, resolveChild");
 
         // deactivate child node when skip event occurs:

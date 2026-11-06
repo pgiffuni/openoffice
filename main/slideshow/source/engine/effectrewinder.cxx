@@ -36,6 +36,7 @@
 #include <com/sun/star/container/XEnumerationAccess.hpp>
 #include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <memory>
 
 using ::com::sun::star::uno::Reference;
 using namespace ::com::sun::star;
@@ -173,7 +174,7 @@ void EffectRewinder::setRootAnimationNode (
 
 
 bool EffectRewinder::rewind (
-    const ::boost::shared_ptr<ScreenUpdater::UpdateLock>& rpPaintLock,
+    const ::std::shared_ptr<ScreenUpdater::UpdateLock>& rpPaintLock,
     const ::boost::function<void(void)>& rSlideRewindFunctor,
     const ::boost::function<void(void)>& rPreviousSlideFunctor)
 {
@@ -323,7 +324,7 @@ bool EffectRewinder::notifyAnimationStart (const AnimationNodeSharedPtr& rpNode)
 {
     // This notification is only relevant for us when the rpNode belongs to
     // the main sequence.
-    BaseNodeSharedPtr pBaseNode (::boost::dynamic_pointer_cast<BaseNode>(rpNode));
+    BaseNodeSharedPtr pBaseNode (::std::dynamic_pointer_cast<BaseNode>(rpNode));
     if ( ! pBaseNode)
         return false;
 

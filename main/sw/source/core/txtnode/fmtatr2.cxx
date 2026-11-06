@@ -54,7 +54,7 @@
 #include <docsh.hxx>
 #include <svl/zforlist.hxx> // GetNumberFormat
 
-#include <functional>
+#include <boost/bind.hpp>
 #include <algorithm>
 #include <memory>
 
@@ -900,7 +900,7 @@ MetaFieldManager::getMetaFields()
     // erase deleted fields
     const MetaFieldList_t::iterator iter(
         ::std::remove_if(m_MetaFields.begin(), m_MetaFields.end(),
-            [](const auto& field) { return field.expired(); }));
+            ::boost::bind(&::std::weak_ptr<MetaField>::expired, _1)));
     m_MetaFields.erase(iter, m_MetaFields.end());
     // filter out fields in UNDO
     MetaFieldList_t filtered(m_MetaFields.size());

@@ -32,7 +32,7 @@
 #include <string>
 
 #include <memory>
-#include <array>
+#include <boost/array.hpp>
 
 #include <com/sun/star/uno/Any.hxx>
 #include <com/sun/star/xml/sax/XFastAttributeList.hpp>
@@ -185,7 +185,7 @@ public:
 	};
 	// we know that the array is of fixed size
 	// the use of Any allow having empty values
-	typedef std::array< ::com::sun::star::uno::Any, 9 > VarMap;
+	typedef boost::array< ::com::sun::star::uno::Any, 9 > VarMap;
 
 	virtual ~LayoutNode()
 		{}

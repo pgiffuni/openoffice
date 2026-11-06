@@ -40,7 +40,7 @@
 #include <vcl/svapp.hxx>
 #include <vcl/vclenum.hxx>
 #include <vcl/virdev.hxx>
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include <memory>
 
 using namespace ::drawinglayer::primitive2d;
@@ -280,7 +280,7 @@ Bitmap PageObjectPainter::CreateMarkedPreview (
 	const BitmapEx& rOverlay,
 	const OutputDevice* pReferenceDevice) const
 {
-	::std::unique_ptr<VirtualDevice> pDevice;
+	::boost::scoped_ptr<VirtualDevice> pDevice;
 	if (pReferenceDevice != NULL)
 		pDevice.reset(new VirtualDevice(*pReferenceDevice));
 	else

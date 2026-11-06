@@ -29,6 +29,7 @@
 #include <com/sun/star/ui/XSidebarPanel.hpp>
 
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <memory>
 #include <vector>
 
@@ -75,7 +76,7 @@ public:
 
 private:
     const ::rtl::OUString msPanelId;
-    ::std::unique_ptr<PanelTitleBar> mpTitleBar;
+    ::boost::scoped_ptr<PanelTitleBar> mpTitleBar;
     const bool mbIsTitleBarOptional;
     cssu::Reference<css::ui::XUIElement> mxElement;
     cssu::Reference<css::ui::XSidebarPanel> mxPanelComponent;
