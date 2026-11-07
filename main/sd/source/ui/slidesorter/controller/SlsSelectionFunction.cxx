@@ -65,7 +65,6 @@
 #include <svx/svdpagv.hxx>
 #include <vcl/msgbox.hxx>
 #include <svx/svxids.hrc>
-#include <boost/bind.hpp>
 #include <boost/optional.hpp>
 
 namespace {
@@ -310,7 +309,7 @@ protected:
 	virtual bool ProcessDragEvent (SelectionFunction::EventDescriptor& rDescriptor);
 
 private:
-	::boost::scoped_ptr<DragAndDropContext> mpDragAndDropContext;
+	::std::unique_ptr<DragAndDropContext> mpDragAndDropContext;
 };
 
 /** Handle events while the left mouse button is pressed over the button
@@ -1464,11 +1463,7 @@ void MultiSelectionModeHandler::UpdatePosition (
 
 	if ( ! (bAllowAutoScroll && mrSlideSorter.GetController().GetScrollBarManager().AutoScroll(
 		rMousePosition,
-		::boost::bind(
-			&MultiSelectionModeHandler::UpdatePosition,
-			this,
-			rMousePosition,
-			false))))
+		[this, rMousePosition]() { this->UpdatePosition( rMousePosition, false ); })))
 	{
 		UpdateModelPosition(aMouseModelPosition);
 	}

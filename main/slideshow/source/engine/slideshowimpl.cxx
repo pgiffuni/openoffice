@@ -103,7 +103,6 @@
 #include "framerate.hxx"
 
 #include <boost/noncopyable.hpp>
-#include <boost/bind.hpp>
 
 #include <map>
 #include <vector>
@@ -536,9 +535,9 @@ struct SlideShowImpl::SeparateListenerImpl : public EventHandler,
         // sprite hiding and shape redraw (at the end of the animation of a
         // shape), which would cause a flicker.
         mrEventQueue.addEventForNextRound(
-            makeEvent(
-                boost::bind( &SlideShowImpl::notifySlideAnimationsEnded, boost::ref(mrShow) ),
-                "SlideShowImpl::notifySlideAnimationsEnded"));
+                makeEvent(
+                    [this]() { this->notifySlideAnimationsEnded( mrShow ); },
+                    "SlideShowImpl::notifySlideAnimationsEnded"));
         return true;
     }
 
@@ -863,11 +862,7 @@ ActivitySharedPtr SlideShowImpl::createSlideTransition(
     // reached final size
     maEventQueue.addEvent(
         makeEvent(
-            boost::bind(
-                &::slideshow::internal::Animation::prefetch,
-                pTransition,
-                AnimatableShapeSharedPtr(),
-                ShapeAttributeLayerSharedPtr()),
+            [pTransition]() { ::slideshow::internal::Animation::prefetch( pTransition, AnimatableShapeSharedPtr(), ShapeAttributeLayerSharedPtr() ); },
             "Animation::prefetch"));
 
     return ActivitySharedPtr(
@@ -1144,8 +1139,7 @@ void SlideShowImpl::displaySlide(
             {
                 std::for_each( maViewContainer.begin(),
                                maViewContainer.end(),
-                               boost::bind( &View::setViewSize, _1,
-                                            boost::cref(slideSize) ));
+                               [&slideSize](auto& view) { view->setViewSize( slideSize ); } );
 
                 // explicitly notify view change here,
                 // because transformation might have changed:
@@ -1163,10 +1157,7 @@ void SlideShowImpl::displaySlide(
                     mpPreviousSlide,
                     mpCurrentSlide,
                     makeEvent(
-                        boost::bind(
-                            &SlideShowImpl::notifySlideTransitionEnded,
-                            this,
-                            false ),
+                        [this]() { this->notifySlideTransitionEnded( false ); },
                         "SlideShowImpl::notifySlideTransitionEnded")));
 
             if (bSkipSlideTransition)
@@ -1189,10 +1180,7 @@ void SlideShowImpl::displaySlide(
                 // effect start event right away.
                 maEventQueue.addEvent(
                     makeEvent(
-                        boost::bind(
-                            &SlideShowImpl::notifySlideTransitionEnded,
-                            this,
-                            true ),
+                        [this]() { this->notifySlideTransitionEnded( true ); },
                         "SlideShowImpl::notifySlideTransitionEnded"));
             }
         }
@@ -1228,10 +1216,7 @@ void SlideShowImpl::redisplayCurrentSlide (void)
     // effect start event right away.
     maEventQueue.addEvent(
         makeEvent(
-            boost::bind(
-                &SlideShowImpl::notifySlideTransitionEnded,
-                this,
-                true ),
+            [this]() { this->notifySlideTransitionEnded( true ); },
             "SlideShowImpl::notifySlideTransitionEnded"));
 
     maEventMultiplexer.notifySlideTransitionStarted();
@@ -1272,8 +1257,8 @@ sal_Bool SlideShowImpl::previousEffect()
     {
         return maEffectRewinder.rewind(
             maScreenUpdater.createLock(false),
-            ::boost::bind<void>(::boost::mem_fn(&SlideShowImpl::redisplayCurrentSlide), this),
-            ::boost::bind<void>(::boost::mem_fn(&SlideShowImpl::rewindEffectToPreviousSlide), this));
+            [this]() { this->redisplayCurrentSlide(); },
+            [this]() { this->rewindEffectToPreviousSlide(); }));
     }
 }
 
@@ -1968,9 +1953,7 @@ bool SlideShowImpl::requestCursor( sal_Int16 nCursorShape )
     // change all views to the requested cursor ID
     std::for_each( maViewContainer.begin(),
                    maViewContainer.end(),
-                   boost::bind( &View::setCursorShape,
-                                _1,
-                                nActualCursor ));
+                   [&](auto& view) { view->setCursorShape( nActualCursor ); } );
 
     return nActualCursor==nCursorShape;
 }
@@ -1982,9 +1965,7 @@ void SlideShowImpl::resetCursor()
     // change all views to the default cursor ID
     std::for_each( maViewContainer.begin(),
                    maViewContainer.end(),
-                   boost::bind( &View::setCursorShape,
-                                _1,
-                                calcActiveCursor(mnCurrentCursor) ));
+                   [&](auto& view) { view->setCursorShape( calcActiveCursor(mnCurrentCursor) ); } );
 }
 
 sal_Bool SlideShowImpl::update( double & nNextTimeout )
@@ -2017,9 +1998,8 @@ sal_Bool SlideShowImpl::update( double & nNextTimeout )
         //    that have zero delay. While the timer is stopped these events
         //    are processed in the same run.
         {
-            comphelper::ScopeGuard scopeGuard(
-                boost::bind( &canvas::tools::ElapsedTime::releaseTimer,
-                             boost::cref(mpPresTimer) ) );
+                comphelper::ScopeGuard scopeGuard(
+                    [&]() { canvas::tools::ElapsedTime::releaseTimer( mpPresTimer ); } );
             mpPresTimer->holdTimer();
 
             // process queues
@@ -2233,7 +2213,7 @@ void SlideShowImpl::notifySlideAnimationsEnded()
         // schedule a slide end event, with automatic mode's
         // delay
         aNotificationEvents = makeInterruptableDelay(
-            boost::bind<void>( boost::mem_fn(&SlideShowImpl::notifySlideEnded), this, false ),
+            [this]() { this->notifySlideEnded( false ); },
             maEventMultiplexer.getAutomaticTimeout() );
     }
     else
@@ -2258,7 +2238,7 @@ void SlideShowImpl::notifySlideAnimationsEnded()
             bHasAutomaticNextSlide )
         {
             aNotificationEvents = makeInterruptableDelay(
-                boost::bind<void>( boost::mem_fn(&SlideShowImpl::notifySlideEnded), this, false ),
+                [this]() { this->notifySlideEnded( false ); },
                 nAutomaticNextSlideTimeout);
 
             // TODO(F2): Provide a mechanism to let the user override
@@ -2274,8 +2254,7 @@ void SlideShowImpl::notifySlideAnimationsEnded()
             // generate interruptible event here, there's no
             // timeout involved.
             aNotificationEvents.mpImmediateEvent =
-                makeEvent( boost::bind<void>(
-                    boost::mem_fn(&SlideShowImpl::notifySlideEnded), this, false ),
+                makeEvent( [this]() { this->notifySlideEnded( false ); },
                     "SlideShowImpl::notifySlideEnded");
         }
     }
@@ -2359,10 +2338,7 @@ void SlideShowImpl::notifySlideEnded (const bool bReverse)
                  // GIF) will not be stopped.
 
     maListenerContainer.forEach<presentation::XSlideShowListener>(
-        boost::bind<void>(
-            ::boost::mem_fn(&presentation::XSlideShowListener::slideEnded),
-            _1,
-            sal_Bool(bReverse)));
+        [&bReverse](const auto& listener) { listener->slideEnded( bReverse ); });
 }
 
 bool SlideShowImpl::notifyHyperLinkClicked( rtl::OUString const& hyperLink )
@@ -2370,9 +2346,7 @@ bool SlideShowImpl::notifyHyperLinkClicked( rtl::OUString const& hyperLink )
     osl::MutexGuard const guard( m_aMutex );
 
     maListenerContainer.forEach<presentation::XSlideShowListener>(
-        boost::bind( &presentation::XSlideShowListener::hyperLinkClicked,
-                     _1,
-                     boost::cref(hyperLink) ));
+        [&hyperLink](const auto& listener) { listener->hyperLinkClicked( hyperLink ); });
     return true;
 }
 
@@ -2389,17 +2363,13 @@ bool SlideShowImpl::handleAnimationEvent( const AnimationNodeSharedPtr& rNode )
 	{
 	case AnimationNode::ACTIVE:
 	    maListenerContainer.forEach<presentation::XSlideShowListener>(
-		    boost::bind( &animations::XAnimationListener::beginEvent,
-			             _1,
-				         boost::cref(xNode) ));
+		    [&xNode](const auto& listener) { listener->beginEvent( xNode ); });
 		break;
 
 	case AnimationNode::FROZEN:
 	case AnimationNode::ENDED:
 	    maListenerContainer.forEach<presentation::XSlideShowListener>(
-		    boost::bind( &animations::XAnimationListener::endEvent,
-			             _1,
-				         boost::cref(xNode) ));
+		    [&xNode](const auto& listener) { listener->endEvent( xNode ); });
         if(mpCurrentSlide->isPaintOverlayActive())
            mpCurrentSlide->drawPolygons();
 		break;

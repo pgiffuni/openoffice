@@ -25,16 +25,16 @@
 #define FILTER_SOURCE_XSLTFILTER_CONTAINERHELPER_HXX
 
 #include <map>
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
+#include <memory>
+#include <algorithm>
 
 namespace XSLT{
 
 template< typename KeyType, typename ObjType, typename CompType = ::std::less< KeyType > >
-class RefMap : public ::std::map< KeyType, ::boost::shared_ptr< ObjType >, CompType >
+class RefMap : public ::std::map< KeyType, ::std::shared_ptr< ObjType >, CompType >
 {
 public:
-	typedef ::std::map< KeyType, ::boost::shared_ptr< ObjType >, CompType > container_type;
+	typedef ::std::map< KeyType, ::std::shared_ptr< ObjType >, CompType > container_type;
 	typedef typename container_type::key_type		key_type;
 	typedef typename container_type::mapped_type	mapped_type;
 	typedef typename container_type::value_type		value_type;
@@ -61,25 +61,25 @@ public:
 	template< typename FuncType >
 	inline void forEachMem(FuncType pFunc)
 	{
-		forEach( ::boost::bind(pFunc, _1 ));
+		forEach( [pFunc](const auto& item) { pFunc( item ); } );
 	}
 
 	template<typename FuncType, typename ParamType>
 	inline void forEachMem(FuncType pFunc, ParamType aParam) const
 	{
-		forEach( ::boost::bind(pFunc, _1, aParam));
+		forEach( [&](const auto& item) { pFunc( item, aParam ); } );
 	}
 
 	template<typename FuncType, typename ParamType1, typename ParamType2>
 	inline void forEachMem(FuncType pFunc, ParamType1 aParam1, ParamType2 aParam2) const
 	{
-		forEach( ::boost::bind(pFunc, _1, aParam1, aParam2 ));
+		forEach( [&](const auto& item) { pFunc( item, aParam1, aParam2 ); } );
 	}
 
 	template<typename FuncType, typename ParamType1, typename ParamType2, typename ParamType3>
 	inline void forEachMem(FuncType pFunc, ParamType1 aParam1, ParamType2 aParam2, ParamType3 aParam3 ) const
 	{
-		forEach( ::boost::bind(pFunc, _1, aParam1, aParam2, aParam3 ));
+		forEach( [&](const auto& item) { pFunc( item, aParam1, aParam2, aParam3 ); } );
 	}
 
 	template<typename FuncType>
@@ -91,25 +91,25 @@ public:
 	template<typename FuncType>
 	inline void forEachMemWithKey(FuncType pFunc) const
 	{
-		forEachWithKey( ::boost::bind(pFunc, _2, _1));
+		forEachWithKey( [&](const auto& key, const auto& value) { pFunc( value, key ); } );
 	}
 
 	template<typename FuncType, typename ParamType>
 	inline void forEachMemWithKey(FuncType pFunc, ParamType aParam1) const
 	{
-		forEachWithKey( ::boost::bind(pFunc, _2, _1, aParam1) );
+		forEachWithKey( [&](const auto& key, const auto& value) { pFunc( value, key, aParam1 ); } );
 	}
 
 	template<typename FuncType, typename ParamType1, typename ParamType2>
 	inline void forEachMemWithKey(FuncType pFunc, ParamType1 aParam1, ParamType2 aParam2) const
 	{
-		forEachWithKey( ::boost::bind(pFunc, _2, _1, aParam1, aParam2) );
+		forEachWithKey( [&](const auto& key, const auto& value) { pFunc( value, key, aParam1, aParam2 ); } );
 	}
 
 	template<typename FuncType, typename ParamType1, typename ParamType2, typename ParamType3>
 	inline void forEachMemWithKey(FuncType pFunc, ParamType1 aParam1, ParamType2 aParam2, ParamType3 aParam3) const
 	{
-		forEachWithKey( ::boost::bind(pFunc, _2, _1, aParam1, aParam2, aParam3) );
+		forEachWithKey( [&](const auto& key, const auto& value) { pFunc( value, key, aParam1, aParam2, aParam3 ); } );
 	}
 private:
 	template<typename FunctorType>

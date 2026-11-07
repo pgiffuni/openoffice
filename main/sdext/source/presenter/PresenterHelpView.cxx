@@ -39,7 +39,7 @@
 #include <com/sun/star/util/Color.hpp>
 #include <algorithm>
 #include <vector>
-#include <boost/bind.hpp>
+#include <memory>
 
 using namespace ::com::sun::star;
 using namespace ::com::sun::star::uno;
@@ -96,7 +96,7 @@ namespace {
 
     private:
         const OUString msText;
-        ::boost::shared_ptr<vector<LineDescriptor> > mpLineDescriptors;
+        ::std::shared_ptr<vector<LineDescriptor> > mpLineDescriptors;
 
         void SplitText (const ::rtl::OUString& rsText, vector<rtl::OUString>& rTextParts);
         void FormatText (
@@ -123,7 +123,7 @@ namespace {
     };
 } // end of anonymous namespace
 
-class PresenterHelpView::TextContainer : public vector<boost::shared_ptr<Block> >
+class PresenterHelpView::TextContainer : public vector<std::shared_ptr<Block> >
 {
 };
 
@@ -386,7 +386,7 @@ void PresenterHelpView::ReadHelpStrings (void)
         UNO_QUERY);
     PresenterConfigurationAccess::ForAll(
         xStrings,
-        ::boost::bind(&PresenterHelpView::ProcessString, this, _2));
+        [this](auto& a1, auto& a2) { this->ProcessString( a2 ); }));
 }
 
 
@@ -405,7 +405,7 @@ void PresenterHelpView::ProcessString (
 
     const awt::Rectangle aWindowBox (mxWindow->getPosSize());
     mpTextContainer->push_back(
-        ::boost::shared_ptr<Block>(
+        ::std::shared_ptr<Block>(
             new Block(sLeftText, sRightText, mpFont->mxFont, mnMaximalWidth)));
 }
 

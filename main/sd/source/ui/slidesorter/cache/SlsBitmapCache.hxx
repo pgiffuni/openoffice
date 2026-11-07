@@ -28,8 +28,8 @@ class SdrPage;
 
 #include <vcl/bitmapex.hxx>
 #include <osl/mutex.hxx>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
+#include <memory>
 #include <unordered_map>
 
 namespace sd { namespace slidesorter { namespace cache {
@@ -166,7 +166,7 @@ public:
             bitmaps are included in the index.  When the flag is <FALSE/> these entries
             are omitted.
     */
-    ::std::auto_ptr<CacheIndex> GetCacheIndex (
+    ::std::unique_ptr<CacheIndex> GetCacheIndex (
         bool bIncludePrecious,
         bool bIncludeNoPreview) const;
 
@@ -176,12 +176,12 @@ public:
     */
     void Compress (
         const CacheKey& rKey,
-        const ::boost::shared_ptr<BitmapCompressor>& rpCompressor);
+        const ::std::shared_ptr<BitmapCompressor>& rpCompressor);
 
 private:
     mutable ::osl::Mutex maMutex;
 
-    ::boost::scoped_ptr<CacheBitmapContainer> mpBitmapContainer;
+    ::std::unique_ptr<CacheBitmapContainer> mpBitmapContainer;
 
     /** Total size of bytes that are occupied by bitmaps in the cache for
         whom the slides are currently not inside the visible area.
@@ -208,7 +208,7 @@ private:
     /** The cache compactor is used to reduce the number of bytes used by
         off-screen preview bitmaps.
     */
-    ::std::auto_ptr<CacheCompactor> mpCacheCompactor;
+    ::std::unique_ptr<CacheCompactor> mpCacheCompactor;
 
     /** This flag stores if the cache is or recently was full, i.e. the
         cache compactor has or had to be run in order to reduce the cache

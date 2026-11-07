@@ -34,7 +34,7 @@
 #include "tools.hxx"
 #include "delayevent.hxx"
 
-#include <boost/bind.hpp>
+#include <memory>
 
 using namespace com::sun::star;
 
@@ -67,13 +67,12 @@ AnimationActivitySharedPtr AnimationSetNode::createActivity() const
     // AnimationBaseNode::fillCommonParameters() has set up
     // immediate deactivation as default when activity ends, but
     if (! isIndefiniteTiming( xAnimateNode->getDuration() )) {
-        boost::shared_ptr<AnimationSetNode> const pSelf(
-            boost::dynamic_pointer_cast<AnimationSetNode>(getSelf()) );
+        std::shared_ptr<AnimationSetNode> const pSelf(
+            std::dynamic_pointer_cast<AnimationSetNode>(getSelf()) );
         ENSURE_OR_THROW(
             pSelf, "cannot cast getSelf() to my type!" );
         aParms.mpEndEvent = makeEvent(
-            boost::bind( &AnimationSetNode::implScheduleDeactivationEvent,
-                         pSelf ),
+            [pSelf]() { pSelf->implScheduleDeactivationEvent(); },
             "AnimationSetNode::implScheduleDeactivationEvent");
     }
 

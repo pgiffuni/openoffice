@@ -32,7 +32,6 @@
 #include <comphelper/anytostring.hxx>
 #include <cppuhelper/exc_hlp.hxx>
 
-#include <boost/bind.hpp>
 #include <algorithm>
 
 #include "layermanager.hxx"
@@ -104,9 +103,7 @@ namespace slideshow
             // init views
             std::for_each( mrViews.begin(),
                            mrViews.end(),
-                           ::boost::bind(&LayerManager::viewAdded,
-                                         this,
-                                         _1) );
+                           [this](auto& view) { this->viewAdded( view ); } );
         }
 
         void LayerManager::activate( bool bSlideBackgoundPainted )
@@ -124,9 +121,7 @@ namespace slideshow
                 // force update of whole slide area
                 std::for_each( maLayers.begin(),
                                maLayers.end(),
-                               boost::bind( &Layer::addUpdateRange,
-                                            _1,
-                                            boost::cref(maPageBounds) ));
+                               [&](auto& layer) { layer.addUpdateRange( maPageBounds ); } );
             }
             else
             {
@@ -156,9 +151,7 @@ namespace slideshow
                 // sprites
                 std::for_each(maAllShapes.begin(),
                               maAllShapes.end(),
-                              boost::bind( &Shape::clearAllViewLayers,
-                                           boost::bind( std::select1st<LayerShapeMap::value_type>(),
-                                                        _1 )));
+                              [&](const auto& pair) { pair.first->clearAllViewLayers(); });
 
                 for (LayerShapeMap::iterator
                          iShape (maAllShapes.begin()),
@@ -195,22 +188,15 @@ namespace slideshow
 
             // add View to all registered shapes
             manageViews(
-                boost::bind(&Layer::addView,
-                            _1,
-                            boost::cref(rView)),
+                [&rView](auto& layer) { layer->addView( rView ); },
                 // repaint on view add
-                boost::bind(&Shape::addViewLayer,
-                            _1,
-                            _2,
-                            true) );
+                [&rView](auto& shape, auto& layer) { shape->addViewLayer( layer, true ); } );
 
             // in case we haven't reached all layers from the
             // maAllShapes, issue addView again for good measure
             std::for_each( maLayers.begin(),
                            maLayers.end(),
-                           boost::bind( &Layer::addView,
-                                        _1,
-                                        boost::cref(rView) ));
+                           [&rView](auto& layer) { layer->addView( rView ); } );
         }
 
         void LayerManager::viewRemoved( const UnoViewSharedPtr& rView )
@@ -222,20 +208,14 @@ namespace slideshow
 
             // remove View from all registered shapes
             manageViews(
-                boost::bind(&Layer::removeView,
-                            _1,
-                            boost::cref(rView)),
-                boost::bind(&Shape::removeViewLayer,
-                            _1,
-                            _2) );
+                [&rView](auto& layer) { layer->removeView( rView ); },
+                [](auto& shape, auto& layer) { shape->removeViewLayer( layer ); } );
 
             // in case we haven't reached all layers from the
             // maAllShapes, issue removeView again for good measure
             std::for_each( maLayers.begin(),
                            maLayers.end(),
-                           boost::bind( &Layer::removeView,
-                                        _1,
-                                        boost::cref(rView) ));
+                           [&rView](auto& layer) { layer->removeView( rView ); } );
         }
 
         void LayerManager::viewChanged( const UnoViewSharedPtr& rView )
@@ -266,8 +246,7 @@ namespace slideshow
             // render all shapes
             std::for_each( maAllShapes.begin(),
                            maAllShapes.end(),
-                           boost::bind(&Shape::render,
-                               boost::bind( ::std::select1st<LayerShapeMap::value_type>(), _1)) );
+                           [&](const auto& pair) { pair.first->render(); } );
         }
 
         void LayerManager::addShape( const ShapeSharedPtr& rShape )
@@ -778,11 +757,9 @@ namespace slideshow
 
             // create ViewLayers for all registered views, and add to
             // newly created layer.
-            ::std::for_each( mrViews.begin(),
-                             mrViews.end(),
-                             boost::bind( &Layer::addView,
-                                          boost::cref(pLayer),
-                                          _1 ));
+                             ::std::for_each( mrViews.begin(),
+                              mrViews.end(),
+                              [&](auto& view) { pLayer->addView( view ); } );
 
             return pLayer;
         }

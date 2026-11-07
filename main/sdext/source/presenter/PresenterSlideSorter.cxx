@@ -47,7 +47,7 @@
 #include <com/sun/star/util/Color.hpp>
 #include <algorithm>
 #include <math.h>
-#include <boost/bind.hpp>
+#include <memory>
 
 using namespace ::com::sun::star;
 using namespace ::com::sun::star::uno;
@@ -160,9 +160,9 @@ class PresenterSlideSorter::MouseOverManager
 public:
     MouseOverManager (
         const Reference<container::XIndexAccess>& rxSlides,
-        const ::boost::shared_ptr<PresenterTheme>& rpTheme,
+        const ::std::shared_ptr<PresenterTheme>& rpTheme,
         const Reference<awt::XWindow>& rxInvalidateTarget,
-        const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager);
+        const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager);
     ~MouseOverManager (void);
 
     void Paint (
@@ -186,7 +186,7 @@ private:
     OUString msText;
     Reference<rendering::XBitmap> mxBitmap;
     Reference<awt::XWindow> mxInvalidateTarget;
-    ::boost::shared_ptr<PresenterPaintManager> mpPaintManager;
+    ::std::shared_ptr<PresenterPaintManager> mpPaintManager;
 
     void SetCanvas (
         const Reference<rendering::XCanvas>& rxCanvas);
@@ -336,14 +336,14 @@ PresenterSlideSorter::PresenterSlideSorter (
                     rxContext,
                     mxWindow,
                     mpPresenterController->GetPaintManager(),
-                    ::boost::bind(&PresenterSlideSorter::SetVerticalOffset,this,_1)));
+                    [this](auto& offset) { this->SetVerticalOffset( offset ); })));
         else
             mpHorizontalScrollBar = ::rtl::Reference<PresenterScrollBar>(
                 new PresenterHorizontalScrollBar(
                     rxContext,
                     mxWindow,
                     mpPresenterController->GetPaintManager(),
-                    ::boost::bind(&PresenterSlideSorter::SetHorizontalOffset,this,_1)));
+                    [this](auto& offset) { this->SetHorizontalOffset( offset ); })));
         mpCloseButton = PresenterButton::Create(
             rxContext,
             mpPresenterController,
@@ -1135,7 +1135,7 @@ void PresenterSlideSorter::Paint (const awt::Rectangle& rUpdateBox)
         PresenterGeometryHelper::ConvertRectangle(mpLayout->maBoundingBox)))
     {
         mpLayout->ForAllVisibleSlides(
-            ::boost::bind(&PresenterSlideSorter::PaintPreview, this, mxCanvas, rUpdateBox, _1));
+            [this](auto& box) { this->PaintPreview( mxCanvas, rUpdateBox, box ); }));
     }
 
     Reference<rendering::XSpriteCanvas> xSpriteCanvas (mxCanvas, UNO_QUERY);
@@ -1701,9 +1701,9 @@ sal_Int32 PresenterSlideSorter::Layout::GetColumn (const sal_Int32 nSlideIndex) 
 
 PresenterSlideSorter::MouseOverManager::MouseOverManager (
     const Reference<container::XIndexAccess>& rxSlides,
-    const ::boost::shared_ptr<PresenterTheme>& rpTheme,
+    const ::std::shared_ptr<PresenterTheme>& rpTheme,
     const Reference<awt::XWindow>& rxInvalidateTarget,
-    const ::boost::shared_ptr<PresenterPaintManager>& rpPaintManager)
+    const ::std::shared_ptr<PresenterPaintManager>& rpPaintManager)
     : mxCanvas(),
       mxSlides(rxSlides),
       mpLeftLabelBitmap(),
@@ -1717,7 +1717,7 @@ PresenterSlideSorter::MouseOverManager::MouseOverManager (
 {
     if (rpTheme.get()!=NULL)
     {
-        ::boost::shared_ptr<PresenterBitmapContainer> pBitmaps (rpTheme->GetBitmapContainer());
+        ::std::shared_ptr<PresenterBitmapContainer> pBitmaps (rpTheme->GetBitmapContainer());
         if (pBitmaps.get() != NULL)
         {
             mpLeftLabelBitmap = pBitmaps->GetBitmap(A2S("LabelLeft"));
@@ -2052,7 +2052,7 @@ PresenterSlideSorter::CurrentSlideFrameRenderer::CurrentSlideFrameRenderer (
 
     PresenterBitmapContainer aContainer (
         A2S("PresenterScreenSettings/SlideSorter/CurrentSlideBorderBitmaps"),
-        ::boost::shared_ptr<PresenterBitmapContainer>(),
+        ::std::shared_ptr<PresenterBitmapContainer>(),
         rxContext,
         rxCanvas);
 

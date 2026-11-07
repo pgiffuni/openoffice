@@ -42,7 +42,6 @@
 #include <basegfx/polygon/b2dpolypolygon.hxx>
 #include <basegfx/numeric/ftools.hxx>
 
-#include <boost/bind.hpp>
 
 using namespace ::basegfx;
 
@@ -178,14 +177,7 @@ public:
             rtl::OUString::createFromAscii(randomSvg), false, 0);
         std::for_each(randomPoly.begin(),
                       randomPoly.end(),
-                      boost::bind(
-             &B2DPolyRange::appendElement,
-                          boost::ref(aRandomIntersections),
-                          boost::bind(
-                 &B2DPolygon::getB2DRange,
-                              _1),
-                          ORIENTATION_NEGATIVE,
-                          1));
+                      [&](const auto& poly) { aRandomIntersections.appendElement( poly.getB2DRange(), ORIENTATION_NEGATIVE, 1 ); });
 #endif
     }
 
@@ -226,14 +218,7 @@ public:
         // now, sort all polygons with increasing 0th point
         std::sort(aRes.begin(),
                   aRes.end(),
-                  boost::bind(
-                      &compare,
-                      boost::bind(
-                          &B2DPolygon::getB2DPoint,
-                          _1,0),
-                      boost::bind(
-                          &B2DPolygon::getB2DPoint,
-                          _2,0)));
+                  [](const auto& p1, const auto& p2) { return compare( p1.getB2DPoint(0), p2.getB2DPoint(0) ); });
 
         return aRes;
     }
@@ -272,8 +257,8 @@ public:
         for( sal_uInt32 i=0; i<nCount; ++i )
         {
             B2DPolygon aRect=tools::createPolygonFromRect(
-                rRange.getElement(i).head);
-            if( rRange.getElement(i).tail.head == ORIENTATION_NEGATIVE )
+                std::get<0>(rRange.getElement(i)));
+            if( std::get<1>(rRange.getElement(i)) == ORIENTATION_NEGATIVE )
                 aRect.flip();
 
             genericClip.append(aRect);

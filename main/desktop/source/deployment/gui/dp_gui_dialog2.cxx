@@ -76,8 +76,7 @@
 
 #include <map>
 #include <vector>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #define OUSTR(x) ::rtl::OUString( RTL_CONSTASCII_USTRINGPARAM(x) )
 
@@ -98,7 +97,7 @@ struct StrAllFiles : public rtl::StaticWithInit< const OUString, StrAllFiles >
 {
 	const OUString operator () () {
 		const ::vos::OGuard guard( Application::GetSolarMutex() );
-		::std::auto_ptr< ResMgr > const resmgr( ResMgr::CreateResMgr( "fps_office" ) );
+		::std::unique_ptr< ResMgr > const resmgr( ResMgr::CreateResMgr( "fps_office" ) );
 		OSL_ASSERT( resmgr.get() != 0 );
 		String ret( ResId( STR_FILTERNAME_ALL, *resmgr.get() ) );
 		return ret;
@@ -647,7 +646,7 @@ bool DialogHelper::installExtensionWarn( const OUString &rExtensionName ) const
 	// cannot pump the Cocoa event queue; the dialog must execute on the main
 	// thread or it appears but never receives events.
 	return vcl::solarthread::syncExecute(
-		boost::bind( &DialogHelper::solar_installExtensionWarn, this, rExtensionName ) );
+		[this]() { this->solar_installExtensionWarn( rExtensionName ); } );
 }
 
 //------------------------------------------------------------------------------

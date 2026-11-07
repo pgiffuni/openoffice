@@ -153,9 +153,8 @@
 #include "ReportControllerObserver.hxx"
 
 #include <boost/mem_fn.hpp>
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include <cppuhelper/exc_hlp.hxx>
 #include <unotools/confignode.hxx>
@@ -2598,7 +2597,7 @@ void OReportController::Notify(SfxBroadcaster & /* _rBc */, SfxHint const & _rHi
         }
         lang::EventObject aEvent(*this);
         m_aSelectionListeners.forEach<view::XSelectionChangeListener>(
-			::boost::bind(&view::XSelectionChangeListener::selectionChanged,_1,boost::cref(aEvent)));
+			[this](const auto& listener) { listener->selectionChanged( aEvent ); }));
 
 	}
 }
@@ -3806,7 +3805,7 @@ void OReportController::switchReportSection(const sal_Int16 _nId)
 		const OXUndoEnvironment::OUndoEnvLock aLock( m_aReportModel->GetUndoEnv() );
 		const bool bSwitchOn = !m_xReportDefinition->getReportHeaderOn();
 
-        ::boost::scoped_ptr< UndoContext > pUndoContext;
+        ::std::unique_ptr< UndoContext > pUndoContext;
 		if ( SID_REPORTHEADERFOOTER == _nId )
 		{
 			const String sUndoAction(ModuleRes(bSwitchOn ? RID_STR_UNDO_ADD_REPORTHEADERFOOTER : RID_STR_UNDO_REMOVE_REPORTHEADERFOOTER));
@@ -3855,7 +3854,7 @@ void OReportController::switchPageSection(const sal_Int16 _nId)
 		const OXUndoEnvironment::OUndoEnvLock aLock( m_aReportModel->GetUndoEnv() );
 		const bool bSwitchOn = !m_xReportDefinition->getPageHeaderOn();
 
-        ::boost::scoped_ptr< UndoContext > pUndoContext;
+        ::std::unique_ptr< UndoContext > pUndoContext;
 		if ( SID_PAGEHEADERFOOTER == _nId )
 		{
 			const String sUndoAction(ModuleRes(bSwitchOn ? RID_STR_UNDO_ADD_REPORTHEADERFOOTER : RID_STR_UNDO_REMOVE_REPORTHEADERFOOTER));

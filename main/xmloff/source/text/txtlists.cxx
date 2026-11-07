@@ -28,6 +28,7 @@
 #include <tools/debug.hxx>
 #include <tools/date.hxx>
 #include <tools/time.hxx>
+#include <tuple>
 
 #include <xmloff/txtimp.hxx>
 #include <xmloff/xmlimp.hxx>
@@ -85,7 +86,7 @@ void XMLTextListsHelper::PushListContext(
     XMLTextListBlockContext *i_pListBlock)
 {
 //    fprintf(stderr, "PushListContext\n");
-    mListStack.push(::boost::make_tuple(i_pListBlock,
+    mListStack.push(::std::make_tuple(i_pListBlock,
         static_cast<XMLTextListItemContext*>(0),
         static_cast<XMLNumberedParaContext*>(0)));
 }
@@ -94,7 +95,7 @@ void XMLTextListsHelper::PushListContext(
     XMLNumberedParaContext *i_pNumberedParagraph)
 {
 //    fprintf(stderr, "PushListContext(NP)\n");
-    mListStack.push(::boost::make_tuple(
+    mListStack.push(::std::make_tuple(
         static_cast<XMLTextListBlockContext*>(0),
         static_cast<XMLTextListItemContext*>(0), i_pNumberedParagraph));
 }
@@ -115,11 +116,11 @@ void XMLTextListsHelper::ListContextTop(
 {
     if ( !mListStack.empty() ) {
         o_pListBlockContext =
-            static_cast<XMLTextListBlockContext*>(&mListStack.top().get<0>());
+            static_cast<XMLTextListBlockContext*>(&std::get<0>(mListStack.top()));
         o_pListItemContext  =
-            static_cast<XMLTextListItemContext *>(&mListStack.top().get<1>());
+            static_cast<XMLTextListItemContext *>(&std::get<1>(mListStack.top()));
         o_pNumberedParagraphContext =
-            static_cast<XMLNumberedParaContext *>(&mListStack.top().get<2>());
+            static_cast<XMLNumberedParaContext *>(&std::get<2>(mListStack.top()));
     }
 }
 
@@ -129,13 +130,13 @@ void XMLTextListsHelper::SetListItem( XMLTextListItemContext *i_pListItem )
     if (i_pListItem) {
         OSL_ENSURE(mListStack.size(),
             "internal error: SetListItem: mListStack empty");
-        OSL_ENSURE(mListStack.top().get<0>(),
+        OSL_ENSURE(std::get<0>(mListStack.top()),
             "internal error: SetListItem: mListStack has no ListBlock");
-        OSL_ENSURE(!mListStack.top().get<1>(),
+        OSL_ENSURE(!std::get<1>(mListStack.top()),
             "error: SetListItem: list item already exists");
     }
     if ( !mListStack.empty() ) {
-        mListStack.top().get<1>() = i_pListItem;
+        std::get<1>(mListStack.top()) = i_pListItem;
     }
 }
 

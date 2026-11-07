@@ -1005,7 +1005,7 @@ short TableDesignDialog::Execute()
 
 void showTableDesignDialog( ::Window* pParent, ViewShellBase& rBase )
 {
-	boost::scoped_ptr< TableDesignDialog > xDialog( new TableDesignDialog( pParent, rBase ) );
+	std::unique_ptr< TableDesignDialog > xDialog( new TableDesignDialog( pParent, rBase ) );
 	xDialog->Execute();
 }
 

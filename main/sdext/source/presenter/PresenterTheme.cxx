@@ -37,7 +37,6 @@
 #include <com/sun/star/rendering/PanoseWeight.hpp>
 #include <com/sun/star/rendering/XBitmap.hpp>
 #include <com/sun/star/util/Color.hpp>
-#include <boost/bind.hpp>
 #include <map>
 
 using namespace ::com::sun::star;
@@ -451,10 +450,7 @@ bool PresenterTheme::ConvertToColor (
         A2S("Presenter/Themes/") + mpTheme->msConfigurationNodeName + A2S("/ViewStyles")))
     {
         pConfiguration->GoToChild(
-            ::boost::bind(&PresenterConfigurationAccess::IsStringPropertyEqual,
-                rsStyleName,
-                A2S("StyleName"),
-                _2));
+            [&rsStyleName](const auto& key, const auto& value) { return PresenterConfigurationAccess::IsStringPropertyEqual( rsStyleName, A2S("StyleName"), value ); }));
     }
     return pConfiguration;
 }
@@ -780,8 +776,7 @@ void PresenterTheme::Theme::Read (
         UNO_QUERY);
     PresenterConfigurationAccess::ForAll(
         xFontNode,
-        ::boost::bind(&PresenterTheme::Theme::ProcessFont,
-            this, ::boost::ref(rReadContext), _1, _2));
+        [&](const auto& key, const auto& value) { this->ProcessFont( rReadContext, key, value ); }));
 }
 
 
@@ -1021,8 +1016,7 @@ void PaneStyleContainer::Read (
         PresenterConfigurationAccess::ForAll(
             xPaneStyleList,
             aProperties,
-            ::boost::bind(&PaneStyleContainer::ProcessPaneStyle,
-                this, ::boost::ref(rReadContext), _1, _2));
+            [&](const auto& key, const auto& value) { this->ProcessPaneStyle( rReadContext, key, value ); }));
     }
 }
 
@@ -1191,8 +1185,7 @@ void ViewStyleContainer::Read (
     {
         PresenterConfigurationAccess::ForAll(
             xViewStyleList,
-            ::boost::bind(&ViewStyleContainer::ProcessViewStyle,
-                this, ::boost::ref(rReadContext), _2));
+            [&](const auto& key, const auto& value) { this->ProcessViewStyle( rReadContext, value ); }));
     }
 }
 
@@ -1325,8 +1318,7 @@ void StyleAssociationContainer::Read (
         PresenterConfigurationAccess::ForAll(
             xStyleAssociationList,
             aProperties,
-            ::boost::bind(&StyleAssociationContainer::ProcessStyleAssociation,
-                this, ::boost::ref(rReadContext), _1, _2));
+            [&](const auto& key, const auto& value) { this->ProcessStyleAssociation( rReadContext, key, value ); }));
     }
 }
 

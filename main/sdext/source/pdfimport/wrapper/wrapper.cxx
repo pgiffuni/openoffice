@@ -61,8 +61,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/preprocessor/stringize.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/scoped_array.hpp>
+#include <memory>
+#include <memory>
 
 #include <unordered_map>
 #include <string.h>
@@ -919,7 +919,7 @@ static bool checkEncryption( const rtl::OUString&                               
     aPDFFile = rtl::OUStringToOString( i_rPath, osl_getThreadTextEncoding() );
 
     pdfparse::PDFReader aParser;
-    boost::scoped_ptr<pdfparse::PDFEntry> pEntry( aParser.read( aPDFFile.getStr() ));
+    std::unique_ptr<pdfparse::PDFEntry[]> pEntry( aParser.read( aPDFFile.getStr() ));
     if( pEntry )
     {
         pdfparse::PDFFile* pPDFFile = dynamic_cast<pdfparse::PDFFile*>(pEntry.get());

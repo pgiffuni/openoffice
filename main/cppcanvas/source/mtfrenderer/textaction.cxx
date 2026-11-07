@@ -50,8 +50,8 @@
 #include <basegfx/tools/canvastools.hxx>
 #include <canvas/canvastools.hxx>
 
-#include <boost/scoped_array.hpp>
-#include <boost/bind.hpp>
+#include <memory>
+#include <functional>
 #include <boost/utility.hpp>
 
 #include "textaction.hxx"
@@ -205,7 +205,7 @@ namespace cppcanvas
             {
                 // no external DX array given, create one from given
                 // string
-                ::boost::scoped_array< sal_Int32 > pCharWidths( new sal_Int32[nLen] );
+                ::std::unique_ptr< sal_Int32 []> pCharWidths( new sal_Int32[nLen] );
 
                 rVDev.GetTextArray( rText, pCharWidths.get(),
                                     static_cast<sal_uInt16>(nStartPos),
@@ -373,9 +373,7 @@ namespace cppcanvas
                 ::std::transform( pOffsets + rSubset.mnSubsetBegin,
                                   pOffsets + rSubset.mnSubsetEnd,
                                   pAdaptedOffsets,
-                                  ::boost::bind( ::std::minus<double>(),
-                                                 _1,
-                                                 nMinPos ) );
+                                  [&](auto val) { return val - nMinPos; } );
 
                 o_rMinPos = nMinPos;
                 o_rMaxPos = nMaxPos;

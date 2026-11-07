@@ -30,8 +30,7 @@
 #include <basegfx/tuple/b2dtuple.hxx>
 #include <basegfx/polygon/b2dpolypolygon.hxx>
 
-#include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <algorithm>
 #include <vector>
 
@@ -51,11 +50,7 @@ namespace basegfx
             maBounds.reset();
             std::for_each(maRanges.begin(),
                           maRanges.end(),
-                          boost::bind(
-                              (void (B2DRange::*)(const B2DRange&))(
-                 &B2DRange::expand),
-                              boost::ref(maBounds),
-                              _1));
+                          [&](const auto& range) { maBounds.expand(range); });
         }
 
     public:
@@ -66,9 +61,9 @@ namespace basegfx
         {}
 
         explicit ImplB2DPolyRange( const B2DPolyRange::ElementType& rElem ) :
-            maBounds( boost::get<0>(rElem) ),
-            maRanges( 1, boost::get<0>(rElem) ),
-            maOrient( 1, boost::get<1>(rElem) )
+            maBounds( std::get<0>(rElem) ),
+            maRanges( 1, std::get<0>(rElem) ),
+            maOrient( 1, std::get<1>(rElem) )
         {}
 
         explicit ImplB2DPolyRange( const B2DRange& rRange, B2VectorOrientation eOrient ) :
@@ -89,14 +84,14 @@ namespace basegfx
 
         B2DPolyRange::ElementType getElement(sal_uInt32 nIndex) const
         {
-            return boost::make_tuple(maRanges[nIndex],
+            return std::make_tuple(maRanges[nIndex],
                                      maOrient[nIndex]);
         }
 
         void setElement(sal_uInt32 nIndex, const B2DPolyRange::ElementType& rElement )
         {
-            maRanges[nIndex] = boost::get<0>(rElement);
-            maOrient[nIndex] = boost::get<1>(rElement);
+            maRanges[nIndex] = std::get<0>(rElement);
+            maOrient[nIndex] = std::get<1>(rElement);
             updateBounds();
         }
 
@@ -109,9 +104,9 @@ namespace basegfx
 
         void insertElement(sal_uInt32 nIndex, const B2DPolyRange::ElementType& rElement, sal_uInt32 nCount)
         {
-            maRanges.insert(maRanges.begin()+nIndex, nCount, boost::get<0>(rElement));
-            maOrient.insert(maOrient.begin()+nIndex, nCount, boost::get<1>(rElement));
-            maBounds.expand(boost::get<0>(rElement));
+            maRanges.insert(maRanges.begin()+nIndex, nCount, std::get<0>(rElement));
+            maOrient.insert(maOrient.begin()+nIndex, nCount, std::get<1>(rElement));
+            maBounds.expand(std::get<0>(rElement));
         }
 
         void insertElement(sal_uInt32 nIndex, const B2DRange& rRange, B2VectorOrientation eOrient, sal_uInt32 nCount)
@@ -123,9 +118,9 @@ namespace basegfx
 
         void appendElement(const B2DPolyRange::ElementType& rElement, sal_uInt32 nCount)
         {
-            maRanges.insert(maRanges.end(), nCount, boost::get<0>(rElement));
-            maOrient.insert(maOrient.end(), nCount, boost::get<1>(rElement));
-            maBounds.expand(boost::get<0>(rElement));
+            maRanges.insert(maRanges.end(), nCount, std::get<0>(rElement));
+            maOrient.insert(maOrient.end(), nCount, std::get<1>(rElement));
+            maBounds.expand(std::get<0>(rElement));
         }
 
         void appendElement(const B2DRange& rRange, B2VectorOrientation eOrient, sal_uInt32 nCount)
@@ -175,9 +170,7 @@ namespace basegfx
         {
             std::for_each(maOrient.begin(),
                           maOrient.end(),
-                          boost::bind(
-                              &flipOrientation,
-                              _1));
+                          [](auto& orient) { flipOrientation(orient); });
         }
 
         B2DRange getBounds() const
@@ -210,9 +203,7 @@ namespace basegfx
             const std::vector<B2DRange>::const_iterator aEnd( maRanges.end() );
             return std::find_if( maRanges.begin(),
                                  aEnd,
-                                 boost::bind<bool>( boost::mem_fn( &B2DRange::overlaps ),
-                                                    _1,
-                                                    boost::cref(rRange) ) ) != aEnd;
+                                 [&](const auto& range) { return range.overlaps(rRange); } ) != aEnd;
         }
 
         B2DPolyPolygon solveCrossovers() const

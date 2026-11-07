@@ -148,7 +148,7 @@ public:
         the content window.
         It does not include the ViewTabBar.
     */
-    ::boost::scoped_ptr< ::Window> mpViewWindow;
+    ::std::unique_ptr< ::Window> mpViewWindow;
 
     ::boost::shared_ptr<ToolBarManager> mpToolBarManager;
 
