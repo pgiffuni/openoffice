@@ -518,7 +518,7 @@ namespace basegfx
                 B2DPolygon aRes;
                 std::for_each( maPoints.begin(),
                                maPoints.end(),
-                               [&](const auto& point) { aRes.append(point, 1); } );
+                               [&](const B2DPoint& point) { aRes.append(point, 1); } );
                 aRes.setClosed( true );
                 return aRes;
             }
@@ -770,7 +770,7 @@ namespace basegfx
             // rect is regarded _outside_ any rects whose events have
             // started earlier
             first = std::find_if(first, last,
-                                 [&](const auto& rect) { return isSameRect(rect, rCurrRect); });
+                                 [&](const ActiveEdge& rect) { return isSameRect(rect, rCurrRect); });
 
             if(first == last)
                 return;
@@ -926,7 +926,7 @@ namespace basegfx
 
             std::for_each( aSweepLineEvents.begin(),
                            aSweepLineEvents.end(),
-                           [&](auto& event) { handleSweepLineEvent(event, aActiveEdgeList, aPolygonPool, aRes); } );
+                           [&](SweepLineEvent& event) { handleSweepLineEvent(event, aActiveEdgeList, aPolygonPool, aRes); } );
 
             return aRes;
         }

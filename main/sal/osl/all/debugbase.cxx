@@ -97,7 +97,7 @@ bool SAL_CALL osl_detail_ObjectRegistry_storeAddresses( char const* pName )
         return true;
     OStringVec::const_iterator const iEnd( rVec.end() );
     return std::find_if( rVec.begin(), iEnd,
-                         [&](const auto& s) { return isSubStr( pName, s ); } ) != iEnd;
+                         [&](const rtl::OString& s) { return isSubStr( pName, s ); } ) != iEnd;
 }
 
 bool SAL_CALL osl_detail_ObjectRegistry_checkObjectCount(
