@@ -533,4 +533,44 @@ Resource RID_ANALYSIS_FUNCTION_NAMES
 		Text [ en-US ] = "FACTDOUBLE";
 	};
 
+	String ANALYSIS_FUNCNAME_Quaternion
+	{
+		Text [ en-US ] = "QUATERNION";
+	};
+
+	String ANALYSIS_FUNCNAME_Qabs
+	{
+		Text [ en-US ] = "QABS";
+	};
+
+	String ANALYSIS_FUNCNAME_Qconj
+	{
+		Text [ en-US ] = "QCONJUGATE";
+	};
+
+	String ANALYSIS_FUNCNAME_Qinverse
+	{
+		Text [ en-US ] = "QINVERSE";
+	};
+
+	String ANALYSIS_FUNCNAME_Qnormalize
+	{
+		Text [ en-US ] = "QNORMALIZE";
+	};
+
+	String ANALYSIS_FUNCNAME_Qproduct
+	{
+		Text [ en-US ] = "QPRODUCT";
+	};
+
+	String ANALYSIS_FUNCNAME_Qrotate
+	{
+		Text [ en-US ] = "QROTATE";
+	};
+
+	String ANALYSIS_FUNCNAME_Qslerp
+	{
+		Text [ en-US ] = "QSLERP";
+	};
+
 };

@@ -76,7 +76,8 @@ SLOFILES=\
 	$(SLO)$/analysis.obj		\
 	$(SLO)$/financial.obj		\
 	$(SLO)$/analysishelper.obj	\
-	$(SLO)$/bessel.obj
+	$(SLO)$/bessel.obj		\
+	$(SLO)$/quaternion.obj
 
 # SCO: the linker does know about weak symbols, but we can't ignore multiple defined symbols
 .IF "$(OS)"=="SCO"

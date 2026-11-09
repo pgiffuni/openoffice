@@ -360,6 +360,45 @@ module addin
         string getImcsch( [in] string Num )
             raises( com::sun::star::lang::IllegalArgumentException );
 
+        /// quaternion.
+        string getQuaternion( [in] double Real, [in] double I, [in] double J, [in] double K )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qabs.
+        double getQabs( [in] double Real, [in] double I, [in] double J, [in] double K )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qconj.
+        string getQconj( [in] double Real, [in] double I, [in] double J, [in] double K )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qinverse.
+        string getQinverse( [in] double Real, [in] double I, [in] double J, [in] double K )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qnormalize.
+        string getQnormalize( [in] double Real, [in] double I, [in] double J, [in] double K )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qproduct.
+        string getQproduct(
+                    [in] double Real1, [in] double I1, [in] double J1, [in] double K1,
+                    [in] double Real2, [in] double I2, [in] double J2, [in] double K2 )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qrotate.
+        string getQrotate(
+                    [in] double Real, [in] double I, [in] double J, [in] double K,
+                    [in] double X, [in] double Y, [in] double Z )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
+        /// qslerp.
+        string getQslerp(
+                    [in] double Real1, [in] double I1, [in] double J1, [in] double K1,
+                    [in] double Real2, [in] double I2, [in] double J2, [in] double K2,
+                    [in] double T )
+            raises( com::sun::star::lang::IllegalArgumentException );
+
         /// complex.
         string getComplex( [in] double Real, [in] double Imaginary, [in] any Suffix )
             raises( com::sun::star::lang::IllegalArgumentException );

@@ -1,2 +1,2 @@
-ca	scaddins	: LIBXSLT:libxslt L10N:l10n vcl NULL
+ca	scaddins	: LIBXSLT:libxslt L10N:l10n vcl BOOST:boost NULL
 ca	scaddins\prj								nmake	-	all	sc_prj NULL
