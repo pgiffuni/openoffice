@@ -616,6 +616,109 @@
 <paragraph xml-lang="en-US" id="par_id6478469" role="paragraph" l10n="NEW">
 <item type="input">=FACTDOUBLE(0)</item> returns 1.</paragraph><comment>see also FACT, MULTINOMIAL, PRODUCT</comment>
 </section>
+	<section id="quaternion">
+	<bookmark xml-lang="en-US" branch="index" id="bm_quaternion">
+	<bookmark_value>QUATERNION function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QUATERNION" id="bm_quaternion_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_quaternion" role="heading" level="2">QUATERNION</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QUATERNION">Returns a quaternion constructed from four coefficients.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_quaternion_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_code" role="code" l10n="U">QUATERNION(Real, I, J, K)</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_real" role="paragraph" l10n="NEW"><emph>Real</emph> is the real coefficient of the quaternion.</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_i" role="paragraph" l10n="NEW"><emph>I</emph> is the i coefficient of the quaternion.</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_j" role="paragraph" l10n="NEW"><emph>J</emph> is the j coefficient of the quaternion.</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_k" role="paragraph" l10n="NEW"><emph>K</emph> is the k coefficient of the quaternion.</paragraph>
+	<paragraph xml-lang="en-US" id="hd_quaternion_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_quaternion_example1" role="paragraph" l10n="NEW"><item type="input">=QUATERNION(1,2,3,4)</item> returns <item type="input">1+2i+3j+4k</item>.</paragraph>
+	</section>
+	<section id="qabs">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qabs">
+	<bookmark_value>QABS function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QABS" id="bm_qabs_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qabs" role="heading" level="2">QABS</paragraph>
+	<paragraph xml-lang="en-US" id="par_qabs_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QABS">Returns the absolute value (magnitude) of a quaternion.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qabs_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qabs_code" role="code" l10n="U">QABS(Real, I, J, K)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qabs_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qabs_example1" role="paragraph" l10n="NEW"><item type="input">=QABS(3,4,0,0)</item> returns 5.</paragraph>
+	</section>
+	<section id="qconj">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qconj">
+	<bookmark_value>QCONJUGATE function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QCONJUGATE" id="bm_qconj_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qconj" role="heading" level="2">QCONJUGATE</paragraph>
+	<paragraph xml-lang="en-US" id="par_qconj_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QCONJUGATE">Returns the conjugate of a quaternion.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qconj_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qconj_code" role="code" l10n="U">QCONJUGATE(Real, I, J, K)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qconj_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qconj_example1" role="paragraph" l10n="NEW"><item type="input">=QCONJUGATE(1,2,3,4)</item> returns <item type="input">1-2i-3j-4k</item>.</paragraph>
+	</section>
+	<section id="qinverse">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qinverse">
+	<bookmark_value>QINVERSE function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QINVERSE" id="bm_qinverse_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qinverse" role="heading" level="2">QINVERSE</paragraph>
+	<paragraph xml-lang="en-US" id="par_qinverse_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QINVERSE">Returns the inverse of a quaternion.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qinverse_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qinverse_code" role="code" l10n="U">QINVERSE(Real, I, J, K)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qinverse_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qinverse_example1" role="paragraph" l10n="NEW"><item type="input">=QINVERSE(1,2,3,4)</item> returns the inverse quaternion.</paragraph>
+	</section>
+	<section id="qnormalize">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qnormalize">
+	<bookmark_value>QNORMALIZE function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QNORMALIZE" id="bm_qnormalize_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qnormalize" role="heading" level="2">QNORMALIZE</paragraph>
+	<paragraph xml-lang="en-US" id="par_qnormalize_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QNORMALIZE">Returns the normalized (unit) quaternion.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qnormalize_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qnormalize_code" role="code" l10n="U">QNORMALIZE(Real, I, J, K)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qnormalize_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qnormalize_example1" role="paragraph" l10n="NEW"><item type="input">=QNORMALIZE(3,4,0,0)</item> returns <item type="input">0.6+0.8i</item>.</paragraph>
+	</section>
+	<section id="qproduct">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qproduct">
+	<bookmark_value>QPRODUCT function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QPRODUCT" id="bm_qproduct_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qproduct" role="heading" level="2">QPRODUCT</paragraph>
+	<paragraph xml-lang="en-US" id="par_qproduct_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QPRODUCT">Returns the Hamilton product of two quaternions.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qproduct_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qproduct_code" role="code" l10n="U">QPRODUCT(Real1, I1, J1, K1, Real2, I2, J2, K2)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qproduct_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qproduct_example1" role="paragraph" l10n="NEW"><item type="input">=QPRODUCT(1,0,0,0, 1,2,3,4)</item> returns <item type="input">1+2i+3j+4k</item>.</paragraph>
+	</section>
+	<section id="qrotate">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qrotate">
+	<bookmark_value>QROTATE function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QROTATE" id="bm_qrotate_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qrotate" role="heading" level="2">QROTATE</paragraph>
+	<paragraph xml-lang="en-US" id="par_qrotate_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QROTATE">Returns a vector rotated by a quaternion.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="hd_qrotate_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qrotate_code" role="code" l10n="U">QROTATE(Real, I, J, K, X, Y, Z)</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qrotate_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qrotate_example1" role="paragraph" l10n="NEW"><item type="input">=QROTATE(1,2,3,4, 1,0,0)</item> returns the rotated vector.</paragraph>
+	</section>
+	<section id="qslerp">
+	<bookmark xml-lang="en-US" branch="index" id="bm_qslerp">
+	<bookmark_value>QSLERP function</bookmark_value>
+	</bookmark>
+	<bookmark xml-lang="en-US" branch="hid/SC_HID_AAI_FUNC_QSLERP" id="bm_qslerp_hid" localize="false"/>
+	<paragraph xml-lang="en-US" id="hd_qslerp" role="heading" level="2">QSLERP</paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_desc" role="paragraph" l10n="NEW"><ahelp hid="HID_AAI_FUNC_QSLERP">Returns the spherical linear interpolation between two quaternions.</ahelp></paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_note" role="paragraph" l10n="NEW">The quaternions are treated as orientations in 3D space, so q and -q are considered equivalent. The interpolation takes the shortest path (180-degree range). Inputs should be unit quaternions; they are not normalized internally.</paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_warning" role="paragraph" l10n="NEW">Note: The QSLERP function is considered experimental. Its interface may change or be removed in future releases.</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qslerp_syntax" role="heading" level="3" l10n="U">Syntax</paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_code" role="code" l10n="U">QSLERP(Real1, I1, J1, K1, Real2, I2, J2, K2, T)</paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_params" role="paragraph" l10n="NEW"><emph>T</emph> is the interpolation parameter; 0 returns the first quaternion, 1 returns the second quaternion.</paragraph>
+	<paragraph xml-lang="en-US" id="hd_qslerp_example" role="heading" level="3" l10n="U">Example</paragraph>
+	<paragraph xml-lang="en-US" id="par_qslerp_example1" role="paragraph" l10n="NEW"><item type="input">=QSLERP(1,0,0,0, 0,1,0,0, 0.5)</item> returns the interpolated quaternion.</paragraph>
+	</section>
 </sort>
 <section id="Section1">
 <embed href="text/scalc/01/04060100.xhp#drking"/>

@@ -64,6 +64,7 @@ $(eval $(call gb_Library_add_exception_objects,analysis,\
 	scaddins/source/analysis/financial \
 	scaddins/source/analysis/analysishelper \
 	scaddins/source/analysis/bessel \
+	scaddins/source/analysis/quaternion \
 ))
 
 # vim: set noet sw=4 ts=4:
