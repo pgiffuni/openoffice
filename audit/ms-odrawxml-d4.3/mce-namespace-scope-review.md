@@ -5,43 +5,120 @@
 **Branch:** ooxml  
 **Target:** trunk  
 **Milestone:** D.4.3  
-**Mode:** Source audit and verification — source code review only
+**Mode:** Source audit only — no production code changes
 
 ---
 
 ## 1. Objective
 
-This document reviews the namespace resolution mechanism in the Apache OpenOffice MCE (Markup Compatibility and Extensibility) implementation. It verifies that namespace declarations are correctly scoped, that prefix shadowing is handled correctly, and that namespace state is properly restored when leaving elements.
+Audit the namespace resolution infrastructure in the MCE implementation to verify that:
+
+1. Namespace declarations are correctly pushed onto the namespace stack for every element.
+2. Prefix shadowing is handled correctly (inner declarations shadow outer ones).
+   - Prefix shadowing refers to XML namespace prefix shadowing (not CSS selector shadowing). When the same namespace prefix is declared on both an outer element and an inner element, the inner declaration takes precedence for resolving prefixed names within the inner element's scope.
+3. Namespace scope restoration works correctly when leaving an element.
+4. Nested `mc:AlternateContent` elements inherit the parent's namespace stack correctly.
+5. Unknown elements outside selected branches do not leak namespace declarations into the sibling context.
+6. Writer integration shares namespace state correctly with `oox` parsing.
 
 ## 2. Namespace Stack Architecture
 
-The `MceAlternateContext` class maintains a namespace stack (`maNamespaceStack`) that maps namespace prefixes to namespace URIs. Each element in the stack represents the namespace declarations in scope at a particular XML element level.
+### 2.1 FragmentHandler Namespace Stack
 
-### 2.1 Stack Push (`pushNamespaces`)
+**File:** `main/oox/source/core/fragmenthandler.cxx`  
+**Header:** `main/oox/inc/oox/core/fragmenthandler.hxx`
 
-File: `main/oox/source/core/mcealternatecontext.cxx`
+The `FragmentHandler` class maintains a namespace stack (`maNamespaceStack`) where each entry is a `std::pair<OUString, OUString>` mapping namespace prefix to namespace URI.
 
-The `pushNamespaces` method is called for every element encountered during XML parsing (in `startFastElement`). It calls `XClExpXmlStream::getNamespaceDeclarations()` to extract all `xmlns:prefix="uri"` declarations from the element's attributes, then pushes them onto `maNamespaceStack`.
+**Push behavior (`pushNamespaces`):**
 
 ```cpp
-void MceAlternateContext::pushNamespaces(
+void FragmentHandler::pushNamespaces(
     const ::com::sun::star::uno::Reference<
         ::com::sun::star::xml::sax::XFastAttributeList >& rAttribs )
 {
     std::vector< std::pair< ::rtl::OUString, ::rtl::OUString > > aMap;
-    ::rtl::OUString aRequires;
-    aMap = MceProcessor::extractNamespaceDeclarations( rAttribs, aRequires );
+    MceProcessor::extractNamespaceDeclarations( rAttribs, aMap );
     maNamespaceStack.push_back( aMap );
 }
 ```
 
-### 2.2 Namespace Stack Pop (`popNamespaces`)
+This is called from `FragmentHandler::startFastElement()` for **every** element encountered by the parser, including:
+- Regular document elements (paragraphs, tables, etc.)
+- `mc:AlternateContent` wrapper elements
+- `mc:Choice` and `mc:Fallback` elements inside AlternateContent
 
-`popNamespaces()` is called when leaving an element (`endFastElement` for `XML_AlternateContent`, `XML_Choice`, and `XML_Fallback`). It removes the top entry from the namespace stack, restoring the previous namespace context.
+### 4.2 Namespace Resolution (`resolvePrefix`)
 
-### 2.3 Namespace Resolution (`resolvePrefix`)
+The `resolvePrefix()` method searches the namespace stack from top (most local) to bottom (most global):
 
-`resolvePrefix` searches the namespace stack from top (most local) to bottom (most global). When a namespace prefix is resolved, the most local declaration wins, correctly implementing XML namespace shadowing rules.
+```cpp
+::rtl::OUString FragmentHandler::resolvePrefix(
+    const ::rtl::OUString& rPrefix ) const
+{
+    // Search from top of stack (most local) to bottom (most global).
+    for ( auto it = maNamespaceStack.rbegin(); it != maNamespaceStack.rend(); ++it )
+    {
+        for ( const auto& rPair : *it )
+        {
+            if ( rPair.first == rPrefix )
+                return rPair.second;
+        }
+    }
+    return ::rtl::OUString(); // Empty = unresolved
+}
+```
+
+**Correctness assessment:** This correctly implements XML namespace shadowing rules:
+- When the same prefix is declared at multiple nesting levels, the innermost declaration wins.
+- Unresolved prefixes return an empty `OUString`.
+
+### 3. MceAlternateContext Namespace Stack
+
+`MceAlternateContext` maintains its **own** namespace stack (`maNamespaceStack`), separate from `FragmentHandler::maNamespaceStack`. This is a **defect** in the current implementation.
+
+**File:** `main/oox/source/core/mcealternatecontext.cxx`
+
+**Problem:** When `createFastChildContext(XML_AlternateContent)` is called by `FragmentHandler`, the new `MceAlternateContext` instance inherits the parent's namespace stack:
+
+```cpp
+pMceCtx->maNamespaceStack = maNamespaceStack;  // inherit namespace stack
+```
+
+However, this is a **shallow copy** of the vector of pairs. Since `maNamespaceStack` is a `std::vector<std::pair<OUString, OUString>>`, the copy is a deep copy of all namespace bindings at that point in time. This is correct for inheritance but has a subtle issue: subsequent `pushNamespaces()` calls on the parent's stack (for elements processed between the AlternateContent start and end) do **not** propagate to the nested context, and vice versa.
+
+This is actually **correct behavior** for namespace scoping: namespace declarations inside an AlternateContent should not leak to sibling elements outside it, and declarations outside should not leak into the AlternateContent unless explicitly inherited at creation time.
+
+However, there is a critical problem:
+
+**Bug 1:** `MceAlternateContext::startFastElement()` calls `pushNamespaces(Attribs)` for **every element except** `XML_AlternateContent` itself:
+
+```cpp
+if ( mbInSelectedBranch && Element != XML_AlternateContent )
+{
+    pushNamespaces( Attribs );
+}
+```
+
+This means namespace declarations on `mc:AlternateContent` itself are **not** pushed onto `MceAlternateContext::maNamespaceStack`. However, they **are** pushed onto `FragmentHandler::maNamespaceStack` by `FragmentHandler::startFastElement(XML_AlternateContent, ...)` before `createFastChildContext` creates the `MceAlternateContext`.
+
+**Consequence:** If a `mc:AlternateContent` element declares a namespace prefix (e.g., `xmlns:custom="http://example.com/custom"`), that namespace is pushed onto `FragmentHandler::maNamespaceStack` but **not** onto `MceAlternateContext::maNamespaceStack`. When `resolvePrefix("custom")` is later called from within `MceAlternateContext`, it will **not** find the prefix because it was never pushed onto `MceAlternateContext::maNamespaceStack`.
+
+**Severity:** Medium. This means namespace declarations directly on `<mc:AlternateContent>` are invisible to prefix resolution inside the AlternateContent content. However, namespace declarations on child elements inside AlternateContent are correctly pushed (via `startFastElement` for non-AlternateContent elements inside the selected branch).
+
+### 4.3 Relationship to `FragmentHandler` Namespace Stack
+
+The `MceAlternateContext` has its **own** `maNamespaceStack` that is separate from `FragmentHandler::maNamespaceStack`. This creates a potential inconsistency:
+
+1. When `FragmentHandler::startFastElement(XML_AlternateContent, ...)` is called, it calls `pushNamespaces(Attribs)` which pushes onto **FragmentHandler's** stack.
+2. Then `createFastChildContext(XML_AlternateContent, ...)` creates `MceAlternateContext`, which copies `FragmentHandler::maNamespaceStack` into its own `maNamespaceStack`.
+3. When `MceAlternateContext::startFastElement(XML_AlternateContent, Attribs)` is called next, it does **not** call `pushNamespaces(Attribs)` for the `XML_AlternateContent` element itself (because `Element == XML_AlternateContent` is excluded). This means the namespace declarations on the `mc:AlternateContent` element itself are on **FragmentHandler's** stack but **not** on `MceAlternateContext::maNamespaceStack`.
+
+**Impact:** Any namespace declared directly on `<mc:AlternateContent xmlns:foo="...">` will **not** be resolvable via `MceAlternateContext::resolvePrefix("foo")` for elements inside that AlternateContent. However, namespaces declared on elements **inside** the AlternateContent (e.g., `<mce:Choice xmlns:custom="...">`) are pushed onto `MceAlternateContext::maNamespaceStack` via `startFastElement`, so they are correctly resolvable.
+
+**Assessment:** This is a minor but real limitation. Namespace declarations on the `mc:AlternateContent` wrapper element itself are lost from the perspective of MceAlternateContext. However, in practice, namespace declarations on `mc:AlternateContent` itself are rare compared to declarations on child elements (`mc:Choice`, `<w:p>`, etc.).
+
+### 4.4 MceAlternateContext::resolvePrefix()
 
 ```cpp
 ::rtl::OUString MceAlternateContext::resolvePrefix(
@@ -60,67 +137,44 @@ void MceAlternateContext::pushNamespaces(
 }
 ```
 
-## 3. Namespace Resolution Across Elements
-
-### 3.1 Declarations on the Current Element
-
-When `startFastElement` is called for any element (including `mc:AlternateContent`, `mc:Choice`, `mc:Fallback`, or ordinary elements), `pushNamespaces( Attribs )` is called first. This extracts all `xmlns:prefix="uri"` declarations from the element's attributes and pushes them onto the namespace stack.
-
-### 3.2 Declarations on `mc:AlternateContent`
-
-Namespace declarations on the `mc:AlternateContent` element itself are pushed onto the stack when `startFastElement` is called for that element. These declarations are in scope for all `mc:Choice` and `mc:Fallback` children.
-
-### 3.3 Declarations on Ancestor Elements
-
-Namespace declarations on ancestor elements (outside the `mc:AlternateContent`) are pushed onto the stack when `FragmentHandler::startFastElement` is called for those ancestor elements. Since `MceAlternateContext::startFastElement` calls `pushNamespaces( Attribs )` for ALL elements (not just `mc:AlternateContent`), ancestor declarations are correctly on the stack when resolving prefixes for elements inside an `mc:AlternateContent`.
-
-### 3.4 Prefix Shadowing
-
-When the same prefix is declared at multiple levels, the most local declaration wins because `resolvePrefix` searches from top of stack to bottom. This correctly implements XML namespace shadowing semantics.
-
-### 3.5 Scope Restoration
-
-When leaving an element (`endFastElement` for `XML_AlternateContent`, `XML_Choice`, or `XML_Fallback`), `popNamespaces()` removes the top entry from the namespace stack, restoring the previous namespace context.
+**Assessment:** Correctly implements prefix shadowing (most local declaration wins) and returns an empty `OUString` for unresolved prefixes.
 
 ---
 
-## 4. Cross-Pipeline Consistency
+## 5. MceProcessor::resolvePrefix()
 
-### 4.1 `oox` Pipeline (Calc, Impress)
+The `MceProcessor::resolvePrefix()` is a **static** method that operates on a provided prefix map:
 
-In the `oox` module, `FragmentHandler::startFastElement` calls `pushNamespaces( rAttribs )` for every element. When `MceAlternateContext::startFastElement` is called (as a nested context handler), it also calls `pushNamespaces( Attribs )` for the `mc:AlternateContent` element itself. This means namespace declarations are pushed onto both `FragmentHandler::maNamespaceStack` and `MceAlternateContext::maNamespaceStack`.
+```cpp
+::rtl::OUString MceProcessor::resolvePrefix(
+    const ::rtl::OUString& rPrefix,
+    const std::vector< std::pair< ::rtl::OUString, ::rtl::OUString > >& rPrefixMap )
+{
+    for ( const auto& rPair : rPrefixMap )
+    {
+        if ( rPair.first == rPrefix )
+            return rPair.second;
+    }
+    return ::rtl::OUString(); // Empty = unresolved
+}
+```
 
-However, `MceAlternateContext::resolvePrefix` searches only `MceAlternateContext::maNamespaceStack`, not `FragmentHandler::maNamespaceStack`. This is correct because namespace declarations inside an `mc:AlternateContent` are scoped to that AlternateContent and its children, not to the surrounding document.
-
-### 4.2 Writer Pipeline (`OOXMLFastDocumentHandler.cxx`)
-
-The Writer filter's `OOXMLFastDocumentHandler::startFastElement` also calls `pushNamespaces( rAttribs )` for `XML_AlternateContent`. The `MceAlternateContext` created by `OOXMLFastDocumentHandler` maintains its own `maNamespaceStack`, independent of `FragmentHandler::maNamespaceStack`. This ensures that namespace scoping works correctly in both the `oox` and `writerfilter` pipelines.
-
----
-
-## 5. Edge Cases
-
-### 5.1 Unresolved Prefixes
-
-If a namespace prefix cannot be resolved (no matching `xmlns:prefix` declaration in scope), `resolvePrefix` returns an empty `OUString`. `resolvePrefixList` skips unresolved prefixes when building the list of namespace URIs for `mc:Requires`. This means an unresolved prefix in `mc:Requires` causes the Choice to be treated as not eligible (since one required namespace is unresolvable).
-
-### 5.2 Empty Prefixes
-
-Empty namespace URIs (default namespace) are handled correctly. If a prefix maps to an empty URI, `resolvePrefix` returns an empty `OUString`, which is treated as an unresolved prefix in `resolvePrefixList`.
-
-### 5.3 Multiple Declarations of Same Prefix
-
-If the same prefix is declared multiple times at different scopes, the most local declaration wins (shadowing). The namespace stack ensures this by searching from top to bottom.
+This is a pure function with no state. It correctly performs prefix-to-URI lookup from a provided map.
 
 ---
 
-## 6. Conclusion
+## 6. Summary of Findings
 
-The namespace resolution mechanism in the MCE implementation correctly handles:
-- Namespace declarations on the current element
-- Namespace declarations on ancestor elements
-- Prefix shadowing (most local declaration wins)
-- Namespace scope restoration when leaving elements
-- Unresolved prefixes (treated as unresolvable)
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| Namespace stack push on element start | confirmed | `FragmentHandler::startFastElement()` calls `pushNamespaces()` for all elements |
+| Namespace stack pop on element end | confirmed | `FragmentHandler::endFastElement()` calls `popNamespaces()` |
+| Prefix shadowing (most local wins) | confirmed | `resolvePrefix()` iterates from `rbegin()` to `rend()` |
+| Nested context inherits parent namespace stack | confirmed | `MceAlternateContext::createFastChildContext(XML_AlternateContent)` copies parent's `maNamespaceStack` |
+| Namespace declarations on `mc:AlternateContent` itself NOT in MceAlternateContext scope | **confirmed gap** | `FillAsXmlStream::startFastElement(XML_AlternateContent)` calls `pushNamespaces` on FragmentHandler's stack, but `MceAlternateContext::startFastElement(XML_AlternateContent)` does NOT call `pushNamespaces` for itself |
+| Unknown elements outside selected branch push namespaces | confirmed | `MceAlternateContext::startUnknownElement()` calls `pushNamespaces(Attribs)` for all unknown elements |
+| Namespace declarations on elements outside AlternateContent are NOT pushed onto MceAlternateContext stack | confirmed | Only elements inside selected AlternateContent branches call `pushNamespaces` on MceAlternateContext's stack |
 
-The implementation is consistent across both the `oox` and `writerfilter` pipelines.
+### Recommendation
+
+Fix `MceAlternateContext::startFastElement()` to call `pushNamespaces(Attribs)` for `XML_AlternateContent` elements as well, so that namespace declarations declared on the `mc:AlternateContent` element itself are available to `resolvePrefix()` for child elements. Alternatively, copy the namespace declarations from `FragmentHandler::maNamespaceStack` when creating the nested `MceAlternateContext` (already done for the initial state, but not for subsequent declarations on the AlternateContent element itself).

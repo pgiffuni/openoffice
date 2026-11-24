@@ -208,7 +208,7 @@ These tests verify the context handler's branch selection and event forwarding. 
 
 **Setup:** Outer `AlternateContent` with Choice requiring `dml`, inner `AlternateContent` inside Choice branch.
 
-**Expected:** Outer `Choice` selected; inner `AlternateContent` processed through delegate (note: nested `MceAlternateContent` is created when `StartElement(XML_AlternateContent)` is called inside a selected Choice branch, so inner `AlternateContent` is processed correctly)  
+**Expected:** Outer Choice selected; inner `AlternateContent` processed through delegate (note: nested `MceAlternateContext` is created when `startFastChildContext(XML_AlternateContent)` is called inside a selected Choice branch, so inner `AlternateContent` is processed correctly)  
 **Status:** NOT RUN — build blocked
 
 ### UT-20: Invalid Prefix — Choice Not Eligible

@@ -19,10 +19,9 @@ This review covers all MCE implementation files:
 | `main/oox/source/core/mceprocessor.cxx` | Implementation | Complete | MceProcessor: namespace resolution, eligibility, selection |
 | `main/oox/inc/oox/core/mcealternatecontext.hxx` | Header | Complete | MceAlternateContext class declaration |
 | `main/oox/source/core/mcealternatecontext.cxx` | Implementation | Complete | MceAlternateContext: branch selection, event forwarding, namespace stack, ignorable namespaces, process content |
-| `main/oox/source/core/fragmenthandler.cxx` | Modified | Complete | `startFastElement` calls `pushNamespaces(rAttribs)` for ALL elements |
-| `main/oox/inc/oox/core/fragmenthandler.hxx` | Modified | Complete | `getMarkupCompatNamespace()`, `maNamespaceStack`, `pushNamespaces`, `popNamespaces`, `resolvePrefix` |
-| `main/writerfilter/source/ooxml/OOXMLFastDocumentHandler.cxx` | Modified | Complete | `createFastChildContext` intercepts `XML_AlternateContent` |
-| `main/oox/Library_oox.mk` | Modified | Complete | Added `mcealternatecontext` and `mceprocessor` to exception objects |
+| `main/oox/source/core/fragmenthandler.cxx` | Modified | Complete | `startFastElement()` calls `pushNamespaces()` for ALL elements |
+| `main/oox/inc/oox/core/fragmenthandler.hxx` | Modified | Complete | `getMarkupCompatNamespace()`, `maNamespaceStack`, `pushNamespaces`, `popNamespaces`, `resolvePrefix`, friend declaration |
+| `main/writerfilter/source/ooxml/OOXMLFastDocumentHandler.cxx` | Modified | Complete | `createFastChildContext` intercepts `XML_AlternateContent`, calls `pushNamespaces(rAttribs)` |
 
 ---
 
@@ -42,15 +41,13 @@ This review covers all MCE implementation files:
 | `selectBranch()` | mceprocessor.cxx:133 | Implemented | First eligible Choice, else Fallback, else NONE |
 | `resolvePrefix()` | mceprocessor.cxx:162 | Implemented | Linear search in prefix map |
 
-**Assessment:** All methods are fully implemented. No stubs or TODO markers.
+### 2.2 Namespace Resolution
 
-### 2.3 Namespace Resolution
-
-The `extractNamespaceDeclarations()` method extracts `xmlns:*` declarations from `XFastAttributeList::getUnknownAttributes()`. The `resolvePrefix()` method searches the prefix map for a matching prefix.
+The `extractNamespaceDeclarations()` method correctly extracts `xmlns:*` declarations from `XFastAttributeList::getUnknownAttributes()`. The `resolvePrefix()` method searches the prefix map for a matching prefix.
 
 **Assessment:** Correctly implemented. Matches the pattern used in other AOO code.
 
-### 2.4 Choice Eligibility
+### 2.3 Choice Eligibility
 
 `isChoiceEligible()` correctly:
 1. Returns `false` for empty `Requires` (conservative)
@@ -60,7 +57,7 @@ The `extractNamespaceDeclarations()` method extracts `xmlns:*` declarations from
 
 **Assessment:** Correctly implemented.
 
-### 2.5 Branch Selection
+### 2.4 Branch Selection
 
 `selectBranch()` correctly:
 - Evaluates Choice branches in document order
@@ -81,12 +78,12 @@ The `extractNamespaceDeclarations()` method extracts `xmlns:*` declarations from
 | `MceAlternateContext()` | mcealternatecontext.cxx:12 | Implemented | Constructor |
 | `~MceAlternateContext()` | mcealternatecontext.cxx:25 | Implemented | Destructor |
 | `startFastElement()` | mcealternatecontext.cxx:31 | Implemented | Handles `XML_Choice`, `XML_Fallback`, `XML_AlternateContent` |
-| `startUnknownElement()` | mcealternatecontext.cxx:95 | Implemented | Forwards to delegate if in selected branch |
-| `endFastElement()` | mcealternatecontext.cxx:130 | Implemented | Handles `XML_AlternateContent`, `XML_Choice`, `XML_Fallback` |
-| `endUnknownElement()` | mcealternatecontext.cxx:148 | Implemented | Forwards to delegate if in selected branch |
-| `createFastChildContext()` | mcealternatecontext.cxx:160 | Implemented | Handles nested `MCAlternateContent` |
-| `createUnknownChildContext()` | mcealternatecontext.cxx:193 | Implemented | Forwards to delegate if in selected branch |
-| `characters()` | mcealternatecontext.cxx:206 | Implemented | Forwards to delegate if in selected branch |
+| `startUnknownElement()` | mcealternatecontext.cxx:104 | Implemented | Forwards to delegate if in selected branch |
+| `endFastElement()` | mcealternatecontext.cxx:139 | Implemented | Handles `XML_AlternateContent`, `XML_Choice`, `XML_Fallback` |
+| `endUnknownElement()` | mcealternatecontext.cxx:157 | Implemented | Forwards to delegate if in selected branch |
+| `createFastChildContext()` | mcealternatecontext.cxx:168 | Implemented | Handles nested `MCAlternateContent` |
+| `createUnknownChildContext()` | mcealternatecontext.cxx:203 | Implemented | Forwards to delegate if in selected branch |
+| `characters()` | mcealternatecontext.cxx:215 | Implemented | Forwards to delegate if in selected branch |
 
 ### 3.2 State Machine
 
@@ -95,7 +92,7 @@ The `extractNamespaceDeclarations()` method extracts `xmlns:*` declarations from
 | `STATE_INITIAL` | → `STATE_CHOICE_SCAN` on first Choice | Correct |
 | `STATE_CHOICE_SCAN` | → `STATE_CHOICE_SELECTED` on eligible Choice | Correct |
 | `STATE_CHOICE_SCAN` | → `STATE_FALLBACK_SELECTED` on Fallback with no eligible Choice | Correct |
-| `STATE_CHOICE_SELECTED` | → `STATE_DONE` on `AlternateContent` end | Correct |
+| `STATE_CHOICE_SELECTED` | → `STATE_DONE` on `XML_AlternateContent` end | Correct |
 | `STATE_FALLBACK_SELECTED` | → `STATE_DONE` on `AlternateContent` end | Correct |
 | `STATE_DONE` | Terminal | Correct |
 
@@ -125,11 +122,11 @@ The `maProcessContentElements` vector stores qualified element names (namespace 
 
 | Change | File:Line | Assessment |
 |--------|-----------|------------|
-| `getMarkupCompatNamespace()` | fragmenthandler.hxx:94 | Added — returns the markup compatibility namespace URI |
-| `maNamespaceStack` | fragmenthandler.hxx:97 | Added — namespace stack for all elements |
-| `resolvePrefix()` | fragmenthandler.hxx:101-102 | Added — resolves prefix using namespace stack |
-| `pushNamespaces()` | fragmenthandler.hxx:108 | Added — pushes namespace declarations onto stack |
-| `popNamespaces()` | fragmenthandler.hxx:112 | Added — pops namespace declaration set |
+| `getMarkupCompatNamespace()` | fragmenthandler.hxx:43-49 | Added — returns the markup compatibility namespace URI |
+| `maNamespaceStack` | fragmenthandler.hxx:100 | Added — namespace stack for all elements |
+| `resolvePrefix()` | fragmenthandler.hxx:104-107 | Added — resolves prefix using namespace stack |
+| `pushNamespaces()` | fragmenthandler.hxx:109-111 | Added — pushes namespace declarations onto stack |
+| `popNamespaces()` | fragmenthandler.hxx:114-115 | Added — pops namespace declaration set |
 
 **Assessment:** Correctly integrates `MceAlternateContext` with `FragmentHandler`.
 
@@ -137,13 +134,12 @@ The `maProcessContentElements` vector stores qualified element names (namespace 
 
 | Change | File:Line | Assessment |
 |--------|-----------|------------|
-| `#include "oox/core/mcealternatecontext.hxx"` | fragmenthandler.cxx:28 | Added — includes MceAlternateContext header |
-| `#include "oox/token/tokens.hxx"` | fragmenthandler.cxx:28 | Added — includes token definitions for `XML_AlternateContent` |
+| `#include "oox/core/mcealternatecontext.hxx"` | fragmenthandler.cxx:27 | Added — includes MceAlternateContext header |
 | `getMarkupCompatNamespace()` | fragmenthandler.cxx:43-49 | Implemented — returns the markup compatibility namespace URI |
-| `startFastElement()` | fragmenthandler.cxx:123-126 | Implemented — calls `pushNamespaces(rAttribs)` for ALL elements |
+| `startFastElement()` | fragmenthandler.cxx:123-125 | Implemented — calls `pushNamespaces(rAttribs)` for ALL elements |
 | `createFastChildContext()` | fragmenthandler.cxx:141-155 | Modified — intercepts `XML_AlternateContent`, creates `MceAlternateContext` |
 
-**Assessment:** Correctly integrates `MceAlternateContext` with `FragmentHandler`. The `pushNamespaces( rAttribs )` call in `startFastElement` ensures namespace declarations from ALL elements are pushed onto the fragment handler's stack.
+**Assessment:** Correctly integrates `MceAlternateContext` with `FragmentHandler`. The `pushNamespaces( rAttribs )` call in `startFastElement` ensures namespace declarations from ALL elements are pushed onto `FragmentHandler::maNamespaceStack`.
 
 ---
 
@@ -153,9 +149,9 @@ The `maProcessContentElements` vector stores qualified element names (namespace 
 
 | Change | File:Line | Assessment |
 |--------|-----------|------------|
-| `#include <oox/core/mcealternatecontext.hxx>` | OOXMLFastDocumentHandler.cxx:37 | Added — includes MceAlternateContext header |
-| `#include <oox/token/tokens.hxx>` | OOXMLFastDocumentHandler.cxx:38 | Added — includes token definitions for `XML_AlternateContent` |
-| `createFastChildContext()` | OOXMLFastDocumentHandler.cxx:104-132 | Modified — intercepts `XML_AlternateContent`, creates `MceAlternateContext`, calls `pushNamespaces( rAttribs )` |
+| `#include <oox/core/mcealternatecontext.hxx>` | OOXMLFastDocumentHandler.cxx:36 | Added — includes MceAlternateContext header |
+| `#include <oox/token/tokens.hxx>` | OOXMLFastDocumentHandler.cxx:37 | Added — includes token definitions for `XML_AlternateContent` |
+| `createFastChildContext()` | OOXMLFastDocumentHandler.cxx:103-133 | Modified — intercepts `XML_AlternateContent`, creates `MceAlternateContext`, calls `pushNamespaces( rAttribs )` |
 
 **Assessment:** Correctly integrates `MceAlternateContext` with Writer filter. The `pushNamespaces( rAttribs )` call ensures namespace declarations from `mc:AlternateContent` are pushed onto `MceAlternateContext::maNamespaceStack`.
 
@@ -174,17 +170,26 @@ The `maProcessContentElements` vector stores qualified element names (namespace 
 
 | Limitation | File:Line | Severity | Phase |
 |------------|-----------|----------|-------|
-| `resolvePrefix()` delegates to `mxDelegate->resolvePrefix(rPrefix)` | mcealternatecontext.cxx:276-278 | Low | Works correctly because `FragmentHandler::resolvePrefix` is called through the delegate, which searches its own namespace stack that includes all namespaces pushed by `FragmentHandler::startFastElement()` |
-| Namespace declarations on elements inside `mc:AlternateContent` but outside `mc:Choice`/`mc:Fallback` are pushed onto MceAlternateContext's stack via `startFastElement(Attribs)` | mcealternatecontext.cxx:39 | Low | Works correctly — all elements inside AlternateContent call `pushNamespaces` |
+| `resolvePrefix()` delegates to `mxDelegate->resolvePrefix(rPrefix)` | mcealternatecontext.cxx:298-311 | Low | Works correctly because `FragmentHandler::resolvePrefix` searches `maNamespaceStack` |
+| Namespace declarations on elements inside `mc:AlternateContent` but outside `mc:Choice`/`mc:Fallback` are pushed onto `MceAlternateContext::maNamespaceStack` | mcealternatecontext.cxx:31 | Low | Works correctly — all elements inside `mc:AlternateContent` call `pushNamespaces()` via `startFastElement` |
+| Namespace declarations on `mc:AlternateContent` itself are pushed onto `FragmentHandler::maNamespaceStack`, NOT `MceAlternateContext::maNamespaceStack` | fragmenthandler.cxx:123-125 | Low | `FillAsXmlStream::startFastElement(XML_AlternateContent, ...)` pushes onto FragmentHandler's stack, not MceAlternateContext's stack. But `MceAlternateContext::startFastElement(XML_AlternateContent)` does NOT call `pushNamespaces(Attribs)` because `Element == XML_AlternateContent`. This means namespace declarations on `mc:AlternateContent` itself are NOT in `MceAlternateContext::maNamespaceStack`. |
+
+### 7.1 Critical Gap: Namespace Declarations on `mc:AlternateContent` Itself
+
+**Severity:** Medium  
+**File:** `main/oox/source/core/mcealternatecontext.cxx:45-48`  
+**Description:** When `FillAsXmlStream::startFastElement(XML_AlternateContent, Attribs)` is called, `pushNamespaces(Attribs)` pushes namespaces onto `FragmentHandler::maNamespaceStack`. But `MceAlternateContext::startFastElement(XML_AlternateContent, ...)` does NOT call `pushNamespaces(Attribs)` because `Element == XML_AlternateContent`. This means namespace declarations on `mc:AlternateContent` itself are NOT in `MceAlternateContext::maNamespaceStack`.
+
+**Impact:** If an `mc:AlternateContent` element has `xmlns:custom="http://example.com/custom"` attribute, and a `mc:Choice` inside it uses `Requires="custom"`, `resolvePrefix("custom")` will NOT find it because the namespace was pushed onto `FragmentHandler::maNamespaceStack`, not `MceAlternateContext::maNamespaceStack`.
+
+**Recommendation:** Either:
+1. Call `pushNamespaces(Attribs)` in `MceAlternateContext::startFastElement(XML_AlternateContent, ...)` as well (but this would push onto `MceAlternateContext::maNamespaceStack` twice if `FragmentHandler` already pushed them — need to avoid double-pushing), OR
+2. Have `MceAlternateContext::resolvePrefix()` fall back to checking `XmlFilterBase::maNamespaceStack` (the FragmentHandler's stack) if not found in `MceAlternateContext::maNamespaceStack`.
+
+**Recommended approach:** Option 2 — have `resolvePrefix()` first check `MceAlternateContext::maNamespaceStack`, then fall back to `mxDelegate->resolvePrefix(rPrefix)` if not found. This is more robust and avoids double-pushing namespaces.
 
 ---
 
 ## 7. Conclusion
 
-The `MceProcessor` and `MceAlternateContext` classes are architecturally correct and implement all Phase 1 requirements:
-- Namespace resolution: Correctly hardcodes Transitional namespaces (SpreadsheetML main)
-- Relationship type resolution: Correctly hardcodes `2006/relationships` URIs
-- VML usage: Correctly used in DOCX (forbidden in Strict)
-- No Strict OOXML export path: Correctly identified as absent
-
-No production code was modified. All findings are based on source code inspection only.
+The MceProcessor class is correctly implemented with proper namespace resolution, feature detection, and branch selection logic. The MceAlternateContext class correctly implements context handling, namespace stack management, and event forwarding. However, there is a gap in namespace resolution for namespaces declared on `mc:AlternateContent` itself — they are pushed onto `FragmentHandler::maNamespaceStack` but not `MceAlternateContext::maNamespaceStack`, so they won't be found by `MceAlternateContext::resolvePrefix()`.

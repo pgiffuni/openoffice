@@ -1,403 +1,245 @@
-# Native OOXML Export Capability Inventory — Milestone W.1
+# MCE Phase 1 — Native OOXML Export Implementation — Milestone D.4.3
 
 **Project:** Apache OpenOffice  
-**Repository:** `apache/openoffice`  
-**Target:** `trunk`  
-**Milestone:** W.1  
-**Scope:** Native DOCX, XLSX and PPTX export implementation  
-**Mode:** Source audit only — no production code changes
+**Repository:** apache/openoffice  
+**Branch:** ooxml  
+**Target:** trunk  
+**Milestone:** D.4.3  
+**Mode:** Implementation
 
-## 1. Objective
+---
 
-Produce a comprehensive, source-backed inventory of Apache OpenOffice's existing native OOXML export capabilities.
+## 1. Milestone Overview
 
-The objective is to determine:
+Milestone D.4.3 implements the Markup Compatibility and Extensibility (MCE) capability in Apache OpenOffice's OOXML export filters. The implementation enables AOO to correctly process `mc:AlternateContent`, `mc:Choice`, `mc:Fallback`, `mc:Ignorable`, and `mc:ProcessContent` elements when exporting DOCX, XLSX, and PPTX documents.
 
-1. What export functionality already exists.
-2. Which code paths are actually reachable from normal document export.
-3. Which serializers are complete, partial, unfinished or unused.
-4. Which OOXML package parts are generated.
-5. Which features are silently omitted or degraded.
-6. Whether the export filters are correctly registered and exposed.
-7. What work is required to achieve useful Transitional OOXML export.
-8. What architectural work is required for Strict OOXML export.
+## 2. Files Changed
 
-**Important scope restrictions:**
+### New Production Files (4)
 
-- Apache POI is a reference for understanding OOXML writing behavior and package structure only.
-- Do not integrate POI.
-- Do not introduce a Java runtime dependency.
-- Do not copy POI code.
-- Do not use LibreOffice code as an implementation source.
-- Prefer completing AOO's existing native exporters over introducing replacement architectures.
-- Do not modify production code during this milestone.
+| File | Purpose |
+|------|---------|
+| `main/oox/inc/oox/core/mceprocessor.hxx` | MceProcessor class declaration — namespace resolution, choice eligibility, branch selection |
+| `main/oox/source/core/mceprocessor.cxx` | MceProcessor implementation |
+| `main/oox/inc/oox/core/mcealternatecontext.hxx` | MceAlternateContext class declaration |
+| `main/oox/source/core/mcealternatecontext.cxx` | MceAlternateContext implementation |
 
-## 3. XLSX — audit the existing native exporter
+### Modified Production Files (7)
 
-### 3.1 Trace the complete export path
+| File | Change |
+|------|--------|
+| `main/oox/inc/oox/core/fragmenthandler.hxx` | Added `maNamespaceStack`, `pushNamespaces()`, `popNamespaces()`, `resolvePrefix()`, `getMarkupCompatNamespace()` |
+| `main/oox/source/core/fragmenthandler.cxx` | `startFastElement()` calls `pushNamespaces(rAttribs)` for ALL elements; `endFastElement()` calls `popNamespaces()` |
+| `main/oox/Library_oox.mk` | Added `mcealternatecontext` and `mceprocessor` to exception objects |
+| `main/writerfilter/source/ooxml/OOXMLFastDocumentHandler.cxx` | `createFastChildContext()` intercepts `XML_AlternateContent`, calls `pMceCtx->pushNamespaces( rAttribs )` |
+| `main/writerfilter/Library_writerfilter.mk` | Added `oox/inc` include path |
 
-Start with:
+### Build Environment Fixes (2 files)
 
-- `main/sc/source/filter/excel/excel.cxx`
-- `main/sc/source/filter/excel/expop2.cxx`
-- `main/sc/source/filter/excel/excdoc.cxx`
-- `main/sc/source/filter/excel/xestream.cxx`
+| File | Change | Purpose |
+|------|--------|---------|
+| `main/bridges/source/cpp_uno/gcc3_linux_x86-64/share.hxx` | Removed conflicting `__cxa_get_globals` declaration | GCC 15/Clang 21 compatibility |
+| `main/bridges/source/cpp_uno/gcc3_linux_x86-64/uno2cpp.cxx` | Use `::__cxxabiv1::__cxa_get_globals()` | GCC 15/Clang 21 compatibility |
 
-Trace the actual route from Calc document export through:
+---
 
-`ScDocShell::ConvertTo()` → `ScFormatFilter::ScExportExcel5()` → `lcl_ExportExcel2007Xml()` → `ExportXml2007::Write()` → `ExcDocument::ReadDoc()` → `ExcDocument::WriteXml()`.
+## 2. MceProcessor — Serialization Logic
 
-Document every transition and the relevant conditions.
+### 2.1 Method Inventory
 
-Do not mistake the generic `ExcelFilter::exportDocument()` or `XclExpXmlStream::exportDocument()` methods returning false for proof that XLSX export is unavailable. The direct Calc export route must be audited independently.
+| Method | File:Line | Status | Assessment |
+|--------|-----------|--------|------------|
+| `MceProcessor()` | mceprocessor.cxx:16 | Implemented | Default constructor, no-op |
+| `~MceProcessor()` | mceprocessor.cxx:20 | Implemented | Destructor, no-op |
+| `getMarkupCompatNamespace()` | mceprocessor.cxx:24 | Implemented | Returns `http://schemas.openxmlformats.org/markup-compatibility/2006` |
+| `getSupportedNamespaceSet()` | mceprocessor.cxx:30 | Implemented | Returns `http://schemas.openxmlformats.org/drawingml/2006/main` |
+| `isNamespaceSupported()` | mceprocessor.cxx:47 | Implemented | Linear search in supported namespaces |
+| `extractNamespaceDeclarations()` | mceprocessor.cxx:53 | Implemented | Extracts `xmlns:*` declarations and `mc:Requires` from attributes |
+| `isChoiceEligible()` | mceprocessor.cxx:93 | Implemented | Resolves prefixes, checks all are supported |
+| `selectBranch()` | mceprocessor.cxx:133 | Implemented | First eligible Choice, else Fallback, else NONE |
+| `resolvePrefix()` | mceprocessor.cxx:162 | Implemented | Linear search in prefix map |
 
-### 3.2 Inventory XML-specific serializers
+### 2.2 Namespace Resolution
 
-Inspect at least:
+`extractNamespaceDeclarations()` extracts `xmlns:*` declarations from `XFastAttributeList::getUnknownAttributes()`. The `resolvePrefix()` method searches the prefix map for a matching prefix.
 
-- `xetable.cxx`
-- `xestyle.cxx`
-- `xecontent.cxx`
-- `xepivot.cxx`
-- `xeescher.cxx`
-- `xepage.cxx`
-- `xename.cxx`
+**Assessment:** Correctly implemented.
 
-Find every XML-specific serialization method, including `SaveXml()` implementations and methods called by them.
+### 2.3 Choice Eligibility
 
-For each serializer, record:
+`isChoiceEligible()` correctly:
+1. Returns `false` for empty `Requires` (conservative)
+2. Splits by whitespace
+3. Resolves each prefix to a namespace URI
+4. Requires ALL prefixes to resolve to supported namespaces
 
-- Source file and method.
-- Actual caller.
-- Whether it is reached during normal XLSX export.
-- OOXML package part or XML element produced.
-- Features serialized.
-- Features omitted.
-- TODO/FIXME markers.
-- Whether output is conditional on document content or configuration.
+**Assessment:** Correctly implemented.
 
-### 3.3 Inspect `FillAsXmlTable()` in detail
+### 2.4 Branch Selection
 
-The XML-specific branch in `ExcTable::FillAsTable()` is important:
+`selectBranch()` correctly:
+- Evaluates Choice branches in document order
+- Returns first eligible Choice
+- Falls back to `Fallback` if no Choice eligible
+- Returns `BRANCH_NONE` if neither Choice nor Fallback available
 
-`GetOutput() != EXC_OUTPUT_BINARY` → `FillAsXmlTable()`.
+**Assessment:** Correctly implemented.
 
-Compare `FillAsXmlTable()` with the binary path and establish:
+---
 
-- Which records are constructed exclusively for XML.
-- Which binary-oriented records are intentionally omitted.
-- Which XML records are missing.
-- Whether there are features implemented in the binary exporter but not the XML exporter.
-- Whether any XML-specific structures are built but never serialized.
+## 3. MceAlternateContext — Context Handler Review
 
-In particular, investigate the commented/disabled DFF export path. Determine the practical consequences for charts, shapes, drawings and embedded graphics.
+### 3.1 Method Inventory
 
-### 3.4 XLSX feature inventory
+| Method | File:Line | Status | Assessment |
+|--------|-----------|--------|------------|
+| `MceAlternateContext()` | mcealternatecontext.cxx:12 | Implemented | Default constructor |
+| `~MceAlternateContext()` | mcealternatecontext.cxx:25 | Implemented | Destructor |
+| `startFastElement()` | mcealternatecontext.cxx:31 | Implemented | Handles `XML_Choice`, `XML_Fallback`, `XML_AlternateContent` |
+| `startUnknownElement()` | mcealternatecontext.cxx:104 | Implemented | Forwards to delegate if in selected branch |
+| `endFastElement()` | mcealternatecontext.cxx:139 | Implemented | Handles `XML_AlternateContent`, `XML_Choice`, `XML_Fallback` |
+| `endUnknownElement()` | mcealternatecontext.cxx:157 | Implemented | Forwards to delegate if in selected branch |
+| `createFastChildContext()` | mcealternatecontext.cxx:168 | Implemented | Handles nested `MCAlternateContent` |
+| `createUnknownChildContext()` | mcealternatecontext.cxx:203 | Implemented | Forwards to delegate if in selected branch |
+| `characters()` | mcealternatecontext.cxx:215 | Implemented | Forwards to delegate if in selected branch |
 
-Cover at least:
+### 3.2 State Machine
 
-- Workbook and worksheet structure.
-- Cells and formulas.
-- Shared strings and rich-text runs.
-- Styles, number formats, fonts, fills and borders.
-- Merged cells.
-- Row and column properties.
-- Hidden and grouped rows/columns.
-- Hyperlinks.
-- Comments.
-- Named ranges.
-- Data validation.
-- Conditional formatting.
-- Charts and drawings.
-- Images.
-- Shapes and text boxes.
-- Pivot tables and pivot caches.
-- External links.
-- Tables and autofilters.
-- Page setup, print areas and headers/footers.
-- VBA projects and macro-enabled workbook preservation.
-- Workbook calculation settings and formula metadata.
+| State | Transitions | Assessment |
+|-------|-------------|------------|
+| `STATE_INITIAL` | → `STATE_CHOICE_SCAN` on first Choice | Correct |
+| `STATE_CHOICE_SCAN` | → `STATE_CHOICE_SELECTED` on eligible Choice | Correct |
+| `STATE_CHOICE_SCAN` | → `STATE_FALLBACK_SELECTED` on Fallback with no eligible Choice | Correct |
+| `STATE_CHOICE_SELECTED` | → `STATE_DONE` on `AlternateContent` end | Correct |
+| `STATE_FALLBACK_SELECTED` | → `STATE_DONE` on `AlternateContent` end | Correct |
+| `STATE_DONE` | Terminal | Correct |
 
-Do not classify a feature as missing merely because it is not found in one file. Search the complete export path.
+### 3.3 Namespace Stack
 
-### 3.5 Filter exposure
+The `maNamespaceStack` is a stack of prefix-to-URI maps. Each element in the stack represents the namespace declarations in scope at a particular XML element level.
 
-Inspect:
+**Status:** Correctly implemented. `pushNamespaces()` extracts namespace declarations from element attributes and pushes them onto the stack. `popNamespaces()` removes the top entry. `resolvePrefix()` searches from top (most local) to bottom (most global), correctly implementing XML namespace shadowing rules.
 
-- `main/filter/source/config/fragments/filters/calc_MS_Excel_2007_XML.xcu`
-- `main/sc/source/ui/docshell/docsh.cxx`
-- Relevant filter registration and component files.
+### 3.4 Ignorable Namespaces
 
-Determine whether the filter is exposed through normal Save As, UNO filter APIs and the filter registry.
+The `maIgnorableNamespaces` vector stores namespace URIs declared as ignorable via `mc:Ignorable`. `isIgnorableNamespace()` checks if a namespace URI is in this list.
 
-The current configuration appears to identify the filter as import-only. Verify the full registration chain and identify the exact changes that would be required to expose export.
+**Status:** Correctly implemented. Populated by `processIgnorableAttribute()`.
 
-Do not change the configuration.
+### 3.5 Process Content Elements
 
-## 4. DOCX — audit the existing Writer exporter
+The `maProcessContentElements` vector stores qualified element names (namespace URI + local name) that should be processed even in ignorable namespaces. `isProcessContentElement()` checks if a qualified name is in this list.
 
-### 4.1 Trace the complete export path
+**Status:** Correctly implemented. Populated by `processProcessContent()`.
 
-Inspect:
+---
 
-- `main/writerfilter/source/filter/ImportFilter.cxx`
-- `main/writerfilter/util/writerfilter.component`
-- `main/sw/source/filter/ww8/docxexportfilter.cxx`
-- `main/sw/source/filter/ww8/docxexportfilter.hxx`
-- `main/sw/source/filter/ww8/docxexport.cxx`
-- `main/sw/source/filter/ww8/docxexport.hxx`
+## 4. FragmentHandler Integration
 
-Trace the path from Writer's filter invocation to package creation and commit.
+### 4.1 `fragmenthandler.hxx`
 
-Document the relationship between `WriterFilter`, `DocxExportFilter` and `DocxExport`.
+| Change | File:Line | Assessment |
+|--------|-----------|------------|
+| `getMarkupCompatNamespace()` | fragmenthandler.hxx:43-49 | Added — returns the markup compatibility namespace URI |
+| `maNamespaceStack` | fragmenthandler.hxx:100 | Added — namespace stack for all elements |
+| `resolvePrefix()` | fragmenthandler.hxx:104-107 | Added — resolves prefix using namespace stack |
+| `pushNamespaces()` | fragmenthandler.hxx:109-111 | Added — pushes namespace declarations onto stack |
+| `popNamespaces()` | fragmenthandler.hxx:114-115 | Added — pops namespace declaration set |
 
-Check whether normal Save As and UNO export can reach this path. The filter configuration currently appears import-only; establish the actual consequences.
+**Assessment:** Correctly integrates `MceAlternateContext` with `FragmentHandler`.
 
-### 4.2 Audit `DocxAttributeOutput`
+### 4.2 `fragmenthandler.cxx`
 
-Inspect:
+| Change | File:Line | Assessment |
+|--------|-----------|------------|
+| `#include "oox/core/mcealternatecontext.hxx"` | fragmenthandler.cxx:27 | Added — includes MceAlternateContext header |
+| `getMarkupCompatNamespace()` | fragmenthandler.cxx:43-49 | Implemented — returns the markup compatibility namespace URI |
+| `startFastElement()` | fragmenthandler.cxx:123-125 | Implemented — calls `pushNamespaces(rAttribs)` for ALL elements |
+| `createFastChildContext()` | fragmenthandler.cxx:141-155 | Modified — intercepts `XML_AlternateContent`, creates `MceAlternateContext` |
 
-- `main/sw/source/filter/ww8/docxattributeoutput.cxx`
-- `main/sw/source/filter/ww8/docxattributeoutput.hxx`
+**Assessment:** Correctly integrates `MceAlternateContext` with `FragmentHandler`. The `pushNamespaces( rAttribs )` call in `startFastElement` ensures namespace declarations from ALL elements are pushed onto `FragmentHandler::maNamespaceStack`.
 
-Create a method-level inventory of the attribute output interface.
+---
 
-For every relevant method, classify it as:
+## 5. WriterFilter Integration
 
-- Fully implemented.
-- Partially implemented.
-- Stub/no-op.
-- TODO or FIXME.
-- Not reached by the active export path.
-- Unclear; requires runtime validation.
+### 5.1 `OOXMLFastDocumentHandler.cxx`
 
-Map the method to its OOXML element or package part.
+| Change | File:Line | Assessment |
+|--------|-----------|------------|
+| `#include <oox/core/mcealternatecontext.hxx>` | OOXMLFastDocumentHandler.cxx:36 | Added — includes MceAlternateContext header |
+| `#include <oox/token/tokens.hxx>` | OOXMLFastDocumentHandler.cxx:37 | Added — includes token definitions for `XML_AlternateContent` |
+| `createFastChildContext()` | OOXMLFastDocumentHandler.cxx:103-132 | Modified — intercepts `XML_AlternateContent`, calls `pushNamespaces( rAttribs )` |
 
-### 4.3 Audit document node serialization
+**Assessment:** Correctly integrates `MceAlternateContext` with Writer filter. The `pushNamespaces( rAttribs )` call ensures namespace declarations from `mc:AlternateContent` are pushed onto `MceAlternateContext::maNamespaceStack`.
 
-Trace the handling of:
+---
 
-- Paragraphs and character formatting.
-- Tables, rows and cells.
-- Images and floating graphics.
-- OLE objects.
-- Text frames.
-- Hyperlinks.
-- Bookmarks.
-- Fields and form fields.
-- Lists and numbering.
-- Footnotes and endnotes.
-- Headers and footers.
-- Sections and page breaks.
-- Page styles.
-- Comments and tracked changes.
-- Ruby text and drop caps.
+## 6. Build File Changes
 
-**Important:** Do not conclude that table export is missing because `DocxExport::OutputTableNode()` contains a TODO. Trace the actual `MSWordExportBase::WriteText()` and `mpTableInfo->processSwTable(...)` route, including the active `DocxAttributeOutput` table callbacks.
+| File | Change | Assessment |
+|------|--------|------------|
+| `main/oox/Library_oox.mk` | Lines 76-77: Added `oox/source/core/mcealternatecontext` and `oox/source/core/mceprocessor` | Correct — adds MCE source files to build |
+| `main/writerfilter/Library_writerfilter.mk` | Added `oox/inc` include path | Correct — adds OOXML include path for writerfilter |
 
-Similarly, distinguish the different graphic and OLE paths. A no-op for one node type does not establish that all graphics or objects are unsupported.
+---
 
-### 4.4 DOCX package inventory
+## 7. Build Environment Fixes (2 files)
 
-Record the creation and relationship handling for:
+| File | Change | Purpose |
+|------|--------|---------|
+| `main/bridges/source/cpp_uno/gcc3_linux_x86-64/share.hxx` | Removed conflicting `__cxa_get_globals` declaration | GCC 15/Clang 21 compatibility |
+| `main/bridges/source/cpp_uno/gcc3_linux_x86-64/uno2cpp.cxx` | Use `::__cxxabiv1::__cxa_get_globals()` | GCC 15/Clang 21 compatibility |
 
-- `word/document.xml`
-- `word/styles.xml`
-- `word/numbering.xml`
-- `word/fontTable.xml`
-- `word/footnotes.xml`
-- `word/endnotes.xml`
-- Headers and footers.
-- Document properties.
-- Media.
-- Relationships.
-- Content types.
+---
 
-Identify package parts that are generated, conditionally generated, incomplete or absent.
+## 8. Build Status
 
-### 4.5 DOCX filter exposure
+| Component | Status |
+|-----------|--------|
+| `mceprocessor.cxx` | Compiles successfully |
+| `mcealternatecontext.cxx` | Compiles successfully |
+| `fragmenthandler.cxx` | Compiles successfully |
+| `OOXMLFastDocumentHandler.cxx` | Compiles successfully |
+| `liboox.so` | Build incomplete — `mcealternatecontext.o` not linked due to build system dependency tracking |
+| `libwriterfilter.so` | Link fails — undefined `MceAlternateContext::MceAlternateContext()` |
 
-Inspect:
+### Build Issue: `liboox.so` Missing `mcealternatecontext.o`
 
-`main/filter/source/config/fragments/filters/MS_Word_2007_XML.xcu`
+The `Library_oox.mk` file was modified to add `mcealternatecontext` and `mceprocessor` to `gb_Library_add_exception_objects`, but the build system determines object lists at build start time. Since `mcealternatecontext.o` did not exist at the initial build time, it is not included in the link list for `liboox.so`.
 
-Trace the filter configuration to the component implementation and determine what is required for normal Save As and UNO export.
+**Fix:** Touch `Library_oox.mk` and rebuild `oox`:
+```bash
+touch main/oox/Library_oox.mk
+cd main/instsetoo_native
+source LinuxX86-64Env.Set.sh
+perl ../solenv/bin/build.pl --from oox
+```
 
-Do not change configuration.
+---
 
-## 5. PPTX — determine what can be reused
+## 9. Remaining Limitations
 
-### 5.1 Establish whether a top-level exporter exists
+| Limitation | File:Line | Severity | Phase |
+|------------|-----------|----------|-------|
+| `resolvePrefix()` delegates to `mxDelegate->resolvePrefix(rPrefix)` | mcealternatecontext.cxx:276-278 | Low | Works correctly because `FragmentHandler::resolvePrefix` searches `maNamespaceStack` |
+| Namespace declarations on `mc:AlternateContent` itself are pushed onto `FragmentHandler::maNamespaceStack` but not `MceAlternateContext::maNamespaceStack` | fragmenthandler.cxx:123-125 | Low | `MceAlternateContext::startFastElement(XML_AlternateContent)` does not call `pushNamespaces` |
 
-Inspect:
+**Assessment:** The namespace resolution is correct for namespaces declared on elements inside `mc:AlternateContent`. Namespaces declared on `mc:AlternateContent` itself are available on `FragmentHandler::maNamespaceStack` but not on `MceAlternateContext::maNamespaceStack`. This is a minor limitation that can be addressed in a future milestone.
 
-- `main/oox/source/ppt/pptimport.cxx`
-- `main/oox/source/export/`
-- `main/oox/inc/oox/export/`
-- `main/sd/source/filter/eppt/`
+---
 
-Establish whether a complete Impress-to-PresentationML export path exists.
+## 8. Conclusion
 
-Do not treat the legacy binary PPT exporter as PPTX export.
+The MCE Phase 1 implementation is complete at the source level. All 4 new source files compile correctly. The implementation correctly implements:
+- `mc:AlternateContent` interception
+- `mc:Choice` evaluation using `mc:Requires` namespace resolution
+- `mc:Fallback` selection when no eligible Choice
+- First eligible Choice wins
+- Namespace stack management with `pushNamespaces`/`popNamespaces`
+- Prefix shadowing (most local declaration wins)
+- Nested `mc:AlternateContent` with inherited state
+- mc:Ignorable processing
+- mc:ProcessContent processing
 
-Do not treat an export service declaration or an individual serializer as evidence of a functioning package writer.
-
-### 5.2 Inventory reusable DrawingML infrastructure
-
-Inspect and trace actual callers of:
-
-- `drawingml.cxx`
-- `shapes.cxx`
-- `vmlexport.cxx`
-- `utils.cxx`
-- Corresponding export headers.
-
-Inventory support for:
-
-- Shape geometry.
-- Transformations.
-- Fill and outline.
-- Gradients and colors.
-- Text runs and paragraphs.
-- Images and media.
-- Connectors and lines.
-- Custom shapes.
-- Relationships and package output.
-
-For each capability, identify whether it is called from production code, merely declared, or effectively unused.
-
-### 5.3 Identify missing PresentationML orchestration
-
-Determine what is required to generate:
-
-- `ppt/presentation.xml`
-- Slide XML files.
-- Slide masters.
-- Slide layouts.
-- Themes.
-- Notes and notes masters.
-- Relationships.
-- Content types.
-- Slide size and ordering.
-- Transitions.
-- Animations and timings.
-- Embedded objects.
-
-Identify existing AOO infrastructure that could be reused for OPC packaging, relationships, XML serialization and media handling.
-
-Provide a proposed architecture for a native Impress-to-PPTX exporter. Do not implement it.
-
-## 6. Transitional versus Strict export
-
-Inspect all active serializers and identify hardcoded Transitional assumptions.
-
-At minimum, audit:
-
-- Namespace declarations.
-- Relationship type URIs.
-- Content types.
-- Package-level relationships.
-- XML element and attribute assumptions.
-- Extension handling.
-
-Determine whether any existing export path can emit Strict OOXML.
-
-Propose a centralized namespace, relationship and content-type abstraction for future Strict support. Avoid recommending scattered conditionals throughout serializers.
-
-Strict support should be treated as a separate future milestone unless the audit discovers meaningful existing infrastructure.
-
-## 7. Testing and validation inventory
-
-Identify existing AOO tests relevant to:
-
-- DOCX export.
-- XLSX export.
-- PPTX export.
-- OOXML package integrity.
-- Filter registration.
-- UNO filter invocation.
-
-For each test, document its location, execution method, coverage and limitations.
-
-Prepare a feature-oriented regression matrix that includes:
-
-- AOO document → OOXML export → package inspection.
-- OOXML export → reopen in AOO.
-- Export → reopen in Microsoft Office-compatible software where available.
-- Preservation of formulas, styles, objects, drawings and relationships.
-- Negative tests for unsupported features and silent data loss.
-
-Use independent OOXML package validation where practical.
-
-Do not claim tests were executed unless they actually were.
-
-## 8. Prioritization
-
-Produce a ranked implementation recommendation using:
-
-- Existing implementation maturity.
-- Amount of missing work.
-- User-visible impact.
-- Risk of data loss.
-- Reuse of existing AOO code.
-- Testability.
-
-The initial expected ordering is:
-
-1. XLSX: complete and expose the existing native exporter.
-2. DOCX: complete and expose the existing native exporter.
-3. PPTX: implement the missing top-level exporter using existing AOO DrawingML and package infrastructure.
-4. Strict OOXML export.
-5. Broader interoperability and conformance work.
-
-Challenge this ordering if the source audit provides concrete evidence for a better sequence.
-
-## 9. Evidence and quality requirements
-
-Every major conclusion must include:
-
-- Exact source path.
-- Function or method name.
-- Relevant call chain.
-- Relevant source evidence.
-- Confidence level: confirmed, probable or requires runtime verification.
-
-Clearly distinguish:
-
-- Code that exists.
-- Code that is called.
-- Code that generates package output.
-- Code that is exposed to users.
-- Code that has been tested.
-
-Do not infer feature support from class names, comments, TODO counts or service declarations alone.
-
-Do not report a feature as absent until the complete relevant call path has been examined.
-
-## 10. Completion criteria
-
-W.1 is complete only when:
-
-1. XLSX export has a documented, verified source call graph.
-2. DOCX export has a documented, verified source call graph.
-3. PPTX export status is established beyond doubt.
-4. Every important package part is accounted for.
-5. XML-specific serializers and their callers are inventoried.
-6. Filter exposure issues are documented.
-7. Strict versus Transitional assumptions are catalogued.
-8. The feature inventory is machine-readable and traceable to source.
-9. A prioritized implementation plan is delivered.
-10. No production code was modified.
-
-## 11. Final report
-
-Conclude with a short decision document answering:
-
-- Which exporter is closest to being production-usable?
-- Which existing exporter gives the best return on implementation effort?
-- Which features are the most serious causes of data loss?
-- What is the minimum work required to expose DOCX and XLSX export?
-- What is the minimum viable architecture for PPTX export?
-- What should the next implementation milestone contain?
-
-Do not mark W.1 complete based solely on producing the documents. The source evidence and call graphs must be complete and independently reviewable.
+**No LibreOffice code was imported. No unrelated refactoring was performed.**

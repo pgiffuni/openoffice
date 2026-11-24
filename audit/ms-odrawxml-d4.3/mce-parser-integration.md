@@ -2,6 +2,7 @@
 
 **Project:** Apache OpenOffice  
 **Repository:** apache/openoffice  
+**Branch:** OOXML  
 **Target:** trunk  
 **Milestone:** W.1  
 **Scope:** Native DOCX, XLSX and PPTX export implementation  
